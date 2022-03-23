@@ -65,7 +65,7 @@ jobs:
       - name: Build Sphinx docs
         working-directory: ./docs
         run: |
-          source .venv/bin/activate
+          source ../.venv/bin/activate
           make dirhtml
           # This fixes broken copy button icons, as explained in
           #   https://github.com/coderefinery/sphinx-lesson/issues/50

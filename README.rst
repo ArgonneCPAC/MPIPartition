@@ -55,14 +55,13 @@ Requirements
 
 Basic Usage
 -----------
-.. note::
-
-   Check the `documentation <https://argonnecpac.github.io/MPIPartition>`_ for
-   an in-depth explanation.
+Check the `documentation <https://argonnecpac.github.io/MPIPartition>`_ for
+an in-depth explanation / documentation.
 
 .. code-block:: python
-   :caption: mpipartiton_example.py
 
+   # this code goes into mpipartition_example.py
+   
    from mpipartition import Partition, distribute, overload
    import numpy as np
 
@@ -93,12 +92,13 @@ This code can then be executed with ``mpi``:
 
    mpirun -n 10 python mpipartition_example.py
 
+--------
+
 A more applied example, using halo catalogs from a
 `HACC <https://cpac.hep.anl.gov/projects/hacc/>`_ cosmological simulation (in
-the `GenericIO <https://git.cels.anl.gov/hacc/genericio>` data format):
+the `GenericIO <https://git.cels.anl.gov/hacc/genericio>`_ data format):
 
 .. code-block:: python
-   :caption: mpipartiton_genericio_example.py
 
    from mpipartition import Partition, distribute, overload
    import numpy as np

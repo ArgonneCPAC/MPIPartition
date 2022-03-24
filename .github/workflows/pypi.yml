@@ -1,4 +1,4 @@
-name: sphinx
+name: pypi
 on:
   push:
     tags:
@@ -6,8 +6,6 @@ on:
 
 env:
   DEFAULT_BRANCH: "master"
-  SPHINXOPTS: "-W --keep-going -T"
-  # ^-- If these SPHINXOPTS are enabled, then be strict about the builds and fail on any warnings
 
 jobs:
   build-and-deploy:

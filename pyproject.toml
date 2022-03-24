@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mpipartition"
-version = "0.2.0"
+version = "0.2.1"
 description = "MPI volume decomposition and particle distribution tools"
 authors = ["Michael Buehlmann <buehlmann.michi@gmail.com>"]
 license = "MIT"

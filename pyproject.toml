@@ -4,11 +4,17 @@ version = "0.1.4"
 description = "MPI volume decomposition and particle distribution tools"
 authors = ["Michael Buehlmann <buehlmann.michi@gmail.com>"]
 license = "MIT"
+readme = "Readme.rst"
+homepage = "https://github.com/ArgonneCPAC/MPIPartition"
+repository = "https://github.com/ArgonneCPAC/MPIPartition"
+documentation = "https://argonnecpac.github.io/MPIPartition"
+keywords = ["MPI", "mpi4py"]
+include = ["LICENSE"]
 
 [tool.poetry.dependencies]
 python = "^3.6.2"
 mpi4py = "^3.1.0"
-numpy = ">1.10"
+numpy = "^1.10"
 
 [tool.poetry.dev-dependencies]
 black = "^22.1.0"

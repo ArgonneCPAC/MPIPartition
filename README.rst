@@ -8,7 +8,7 @@ MPIPartition
 .. image:: https://github.com/ArgonneCPAC/MPIPartition/actions/workflows/pypi.yml/badge.svg
    :target: https://github.com/ArgonneCPAC/MPIPartition/actions/workflows/pypi.yml
 
-.. image:: https://github.com/ArgonneCPAC/MPIPartition/actions/workflows/sphinx.yml/badge.svg)
+.. image:: https://github.com/ArgonneCPAC/MPIPartition/actions/workflows/sphinx.yml/badge.svg
    :target: https://github.com/ArgonneCPAC/MPIPartition/actions/workflows/sphinx.yml
 
 A python module for MPI volume decomposition and particle distribution

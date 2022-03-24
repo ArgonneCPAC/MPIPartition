@@ -2,7 +2,7 @@
 
 __author__ = """Michael Buehlmann"""
 __email__ = "buehlmann.michi@gmail.com"
-__version__ = "0.1.4"
+__version__ = "0.2.0"
 
 
 from .partition import Partition

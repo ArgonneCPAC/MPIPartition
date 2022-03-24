@@ -3,9 +3,13 @@ MPIPartition
 
 
 .. image:: https://img.shields.io/pypi/v/mpipartition.svg
-        :target: https://pypi.python.org/pypi/mpipartition
+   :target: https://pypi.python.org/pypi/mpipartition
 
+.. image:: https://github.com/ArgonneCPAC/MPIPartition/actions/workflows/pypi.yml/badge.svg
+   :target: https://github.com/ArgonneCPAC/MPIPartition/actions/workflows/pypi.yml
 
+.. image:: https://github.com/ArgonneCPAC/MPIPartition/actions/workflows/sphinx.yml/badge.svg)
+   :target: https://github.com/ArgonneCPAC/MPIPartition/actions/workflows/sphinx.yml
 
 A python module for MPI volume decomposition and particle distribution
 

@@ -8,8 +8,15 @@ readme = "README.rst"
 homepage = "https://github.com/ArgonneCPAC/MPIPartition"
 repository = "https://github.com/ArgonneCPAC/MPIPartition"
 documentation = "https://argonnecpac.github.io/MPIPartition"
-keywords = ["MPI", "mpi4py"]
+keywords = ["MPI", "mpi4py", "scientific computing", "parallel computing"]
 include = ["LICENSE"]
+classifiers = [
+    "Topic :: System :: Distributed Computing",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers"
+]
 
 [tool.poetry.dependencies]
 python = "^3.6.2"

@@ -7,8 +7,21 @@ MPI Partitioning
 
    from mpipartition import Partition
 
-   # partitioning a box with extent [0, 4] among the available ranks
-   partition = Partition(1.)
+   # partitioning a box among the available ranks
+   partition = Partition()
+
+   # print how the volume has been partitioned:
+   if partition.rank == 0:
+       print(partition.decomposition)
+
+   # print coordinate of this rank:
+   print(partition.rank, partition.coordinates)
+
+   # print size of this rank (as fraction of unit-cube)
+   if partition.rank == 0:
+       print(partition.extent)
+
+
 
 
 
@@ -16,8 +29,8 @@ MPI Distribution Algorithms
 ===========================
 
 Processing large datasets on multiple MPI ranks requires to distribute the data
-among the processes. The ``mpipartition`` package contains the following functions
-that abstract this task in different use-cases:
+among the processes. The ``mpipartition`` package contains the following
+functions that abstract this task in different use-cases:
 
 .. autosummary::
    :nosignatures:
@@ -37,8 +50,11 @@ and then distribute them according to the positions
    from mpipartition import Partition
    from mpipartition import distribute, overload, exchange
 
-   # partitioning a box with extent [0, 1]
-   partition = Partition(1.)
+   # assuming a cube size of 1.
+   box_size = 1.0
+
+   # partitioning a box with the available MPI ranks
+   partition = Partition()
 
    # number of random particles per rank
    n_local = 100
@@ -53,7 +69,7 @@ and then distribute them according to the positions
    }
 
    # assign to rank by position
-   data_distributed = distribute(partition, data, ('x', 'y', 'z'))
+   data_distributed = distribute(partition, box_size, data, ('x', 'y', 'z'))
 
    # make sure we still have all particles
    n_local_distributed = len(data_distributed['x'])
@@ -76,7 +92,7 @@ Now, we overload the partitions by 0.1
 
 .. code-block:: python
 
-   data_overloaded = overload(partition, data_distributed, 0.1, ('x', 'y', 'z'))
+   data_overloaded = overload(partition, box_size, data_distributed, 0.1, ('x', 'y', 'z'))
 
 
 Sometimes, the destination of a particle is given by a key, not by the position

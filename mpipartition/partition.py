@@ -46,8 +46,6 @@ class Partition:
 
     Parameters
     ----------
-    box_size : float
-        The length of the cubic volume
 
     create_topo26 : boolean
         If `True`, an additional graph communicator will be initialized
@@ -85,12 +83,10 @@ class Partition:
 
     def __init__(
         self,
-        box_size: float,
         create_topo26: bool = False,
         mpi_waittime: float = 0,
         commensurate_topo: List[int] = None,
     ):
-        self._box_size = box_size
         self._rank = _rank
         self._nranks = _nranks
         if commensurate_topo is None:
@@ -120,7 +116,7 @@ class Partition:
                     self._neighbors[i + 1, j + 1, k + 1] = neigh
                     # self._neighbors.append(neigh)
 
-        self._extent = [self._box_size / self._decomp[i] for i in range(3)]
+        self._extent = [1.0 / self._decomp[i] for i in range(3)]
         self._origin = [self._coords[i] * self._extent[i] for i in range(3)]
 
         # A graph topology linking all 26 neighbors
@@ -154,11 +150,6 @@ class Partition:
 
     def __del__(self):
         self._topo.Free()
-
-    @property
-    def box_size(self):
-        """float: the length of the full cubic volume"""
-        return self._box_size
 
     @property
     def comm(self):

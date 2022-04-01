@@ -61,7 +61,7 @@ an in-depth explanation / documentation.
 .. code-block:: python
 
    # this code goes into mpipartition_example.py
-   
+
    from mpipartition import Partition, distribute, overload
    import numpy as np
 
@@ -106,19 +106,19 @@ the `GenericIO <https://git.cels.anl.gov/hacc/genericio>`_ data format):
 
    # create a partition with available MPI ranks
    box_size = 64.  # box size in Mpc/h
-   partition = Partition(box_size)
+   partition = Partition()
 
    # read GenericIO data in parallel
    data = pygio.read_genericio("m000p-499.haloproperties")
 
    # distribute
-   data = distribute(partition, data, [f"fof_halo_center{x}" for x in "xyz"])
+   data = distribute(partition, box_size, data, [f"fof_halo_center{x}" for x in "xyz"])
 
    # mark "owned" data with rank (allows differentiating owned and overloaded data)
    data["status"] = partition.rank * np.ones(len(data["fof_halo_center_x"]), dtype=np.uint16)
 
    # overload by 4Mpc/h
-   data = overload(partition, data, 4., [f"fof_halo_center{x}" for x in "xyz"])
+   data = overload(partition, box_size, data, 4., [f"fof_halo_center{x}" for x in "xyz"])
 
    # now we can do analysis such as 2pt correlation functions (up to 4Mpc/h)
    # or neighbor finding, etc.

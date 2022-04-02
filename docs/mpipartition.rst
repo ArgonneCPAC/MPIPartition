@@ -3,6 +3,10 @@ MPI Partitioning
 
 .. currentmodule:: mpipartition
 
+The :class:`Partition` class will create a volume decomposition using the
+number of available MPI ranks. After initialization, the instance contains
+information about the decomposition and the local rank coordinates.
+
 .. code-block:: python
 
    from mpipartition import Partition
@@ -10,14 +14,15 @@ MPI Partitioning
    # partitioning a box among the available ranks
    partition = Partition()
 
-   # print how the volume has been partitioned:
+   # print how the volume has been partitioned (from rank 0):
    if partition.rank == 0:
        print(partition.decomposition)
 
-   # print coordinate of this rank:
+   # print coordinate of all ranks:
    print(partition.rank, partition.coordinates)
 
-   # print size of this rank (as fraction of unit-cube)
+   # print size of this rank (as fraction of unit-cube).
+   # Note: the extent of each rank will be the same
    if partition.rank == 0:
        print(partition.extent)
 
@@ -59,7 +64,7 @@ and then distribute them according to the positions
    # number of random particles per rank
    n_local = 100
 
-   # randomly distributed particles
+   # randomly distributed particles in the unit cube
    data = {
        "x": np.random.uniform(0, 1, n_local),
        "y": np.random.uniform(0, 1, n_local),

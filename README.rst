@@ -66,7 +66,8 @@ an in-depth explanation / documentation.
    import numpy as np
 
    # create a partition of the unit cube with available MPI ranks
-   partition = Partition(1.)
+   box_size = 1.
+   partition = Partition()
 
    if partition.rank == 0:
        print(f"Number of ranks: {partition.nranks}")
@@ -81,10 +82,10 @@ an in-depth explanation / documentation.
    }
 
    # distribute data to ranks assigned to corresponding subvolume
-   data = distribute(partition, data, ('x', 'y', 'z'))
+   data = distribute(partition, box_size, data, ('x', 'y', 'z'))
 
    # overload "edge" of each subvolume by 0.05
-   data = overload(partition, data, 0.05, ('x', 'y', 'z'))
+   data = overload(partition, box_size, data, 0.05, ('x', 'y', 'z'))
 
 This code can then be executed with ``mpi``:
 

@@ -14,7 +14,7 @@
 
    .. toctree::
       :caption: MPIPartition
-      :maxdepth: 2
+      :maxdepth: 3
 
       mpipartition
 

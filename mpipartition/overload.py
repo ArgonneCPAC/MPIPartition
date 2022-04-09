@@ -1,5 +1,5 @@
 from .partition import Partition
-from typing import Mapping, Tuple, Union
+from typing import Mapping, Tuple, Union, List
 import numpy as np
 
 ParticleDataT = Mapping[str, np.ndarray]
@@ -10,7 +10,7 @@ def overload(
     box_size: float,
     data: ParticleDataT,
     overload_length: float,
-    xyz_keys: Tuple[str, str, str],
+    coord_keys: List[str],
     *,
     verbose: Union[bool, int] = False,
 ):
@@ -35,7 +35,7 @@ def overload(
         The thickness of the boundary layer that will be copied to the
         neighboring rank
 
-    xyz_keys:
+    coord_keys:
         The columns in `data` that define the position of the object
 
     verbose:
@@ -58,12 +58,15 @@ def overload(
     will need to be done manually after calling this function.
 
     """
+    assert len(coord_keys) == partition.dimensions
+
     nranks = partition.nranks
     if nranks == 1:
         return data
 
     rank = partition.rank
     comm = partition.comm
+    dimensions = partition.dimensions
     origin = box_size * np.array(partition.origin)
     extent = box_size * np.array(partition.extent)
 
@@ -71,10 +74,7 @@ def overload(
 
     # Find all overload regions each particle should be in
     overload = {}
-    for (
-        i,
-        x,
-    ) in enumerate(xyz_keys):
+    for (i, x) in enumerate(coord_keys):
         _i = np.zeros_like(data[x], dtype=np.int8)
         _i[data[x] < origin[i] + overload_length] = -1
         _i[data[x] > origin[i] + extent[i] - overload_length] = 1
@@ -83,45 +83,62 @@ def overload(
     # Get particle indices of each of the 27 neighbors overload
     exchange_indices = [np.empty(0, dtype=np.int64) for i in range(nranks)]
 
-    def add_exchange_indices(mask, i, j, k):
-        n = neighbors[i + 1, j + 1, k + 1]
+    def add_exchange_indices(mask, idx):
+        assert len(idx) == dimensions
+        n = neighbors[tuple(_i + 1 for _i in idx)]
         if n != rank:
             exchange_indices[n] = np.union1d(exchange_indices[n], np.nonzero(mask)[0])
 
-    for i in [-1, 1]:
-        # face
-        maski = overload[0] == i
-        add_exchange_indices(maski, i, 0, 0)
-
-        for j in [-1, 1]:
-            # edge
-            maskj = maski & (overload[1] == j)
-            add_exchange_indices(maskj, i, j, 0)
-
+    # TRIAL & ERROR
+    def _recursive_edge(mask: np.ndarray, fixed_indices: List[int], remaining_indices: List[int]):
+        remaining = len(remaining_indices)
+        assert len(fixed_indices) + remaining == dimensions
+        if remaining == 0:
+            return
+        for d in range(remaining):
             for k in [-1, 1]:
-                # corner
-                maskk = maskj & (overload[2] == k)
-                add_exchange_indices(maskk, i, j, k)
+                maskk = mask & (overload[remaining_indices[d]] == k)
+                # Edge
+                add_exchange_indices(maskk, fixed_indices + [0]*d + [k] + [0]*(remaining-d-1))
+                # Corner
+                _recursive_edge(maskk, fixed_indices + [0]*d + [k], remaining_indices[d+1:])
+    _recursive_edge(np.ones_like(overload[0], dtype=np.bool_), [], list(range(dimensions)))
 
-        for k in [-1, 1]:
-            # edge
-            maskk = maski & (overload[2] == k)
-            add_exchange_indices(maskk, i, 0, k)
+    # As an example, this is for 3 dimensions (original code)
+    # for i in [-1, 1]:
+    #     # face
+    #     maski = overload[0] == i
+    #     add_exchange_indices(maski, [i, 0, 0])
 
-    for j in [-1, 1]:
-        # face
-        maskj = overload[1] == j
-        add_exchange_indices(maskj, 0, j, 0)
+    #     for j in [-1, 1]:
+    #         # edge
+    #         maskj = maski & (overload[1] == j)
+    #         add_exchange_indices(maskj, [i, j, 0])
 
-        for k in [-1, 1]:
-            # edge
-            maskk = maskj & (overload[2] == k)
-            add_exchange_indices(maskk, 0, j, k)
+    #         for k in [-1, 1]:
+    #             # corner
+    #             maskk = maskj & (overload[2] == k)
+    #             add_exchange_indices(maskk, [i, j, k])
 
-    for k in [-1, 1]:
-        # face
-        maskk = overload[2] == k
-        add_exchange_indices(maskk, 0, 0, k)
+    #     for k in [-1, 1]:
+    #         # edge
+    #         maskk = maski & (overload[2] == k)
+    #         add_exchange_indices(maskk, [i, 0, k])
+
+    # for j in [-1, 1]:
+    #     # face
+    #     maskj = overload[1] == j
+    #     add_exchange_indices(maskj, [0, j, 0])
+
+    #     for k in [-1, 1]:
+    #         # edge
+    #         maskk = maskj & (overload[2] == k)
+    #         add_exchange_indices(maskk, [0, j, k])
+
+    # for k in [-1, 1]:
+    #     # face
+    #     maskk = overload[2] == k
+    #     add_exchange_indices(maskk, [0, 0, k])
 
     # Check how many elements will be sent
     send_counts = np.array([len(i) for i in exchange_indices], dtype=np.int32)
@@ -146,9 +163,8 @@ def overload(
                 print(f" - send_displacements: {send_displacements}")
                 print(f" - recv_counts:        {recv_counts}")
                 print(f" - recv_displacements: {recv_displacements}")
-                print(f" - overload_x: {overload[0]}")
-                print(f" - overload_y: {overload[1]}")
-                print(f" - overload_z: {overload[2]}")
+                for i, x in enumerate(coord_keys):
+                    print(f" - overload_{x}: {overload[i]}")
                 print(f" - send_idx: {send_idx}")
                 print(f"", flush=True)
             comm.Barrier()

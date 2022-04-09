@@ -107,7 +107,7 @@ the `GenericIO <https://git.cels.anl.gov/hacc/genericio>`_ data format):
 
    # create a partition with available MPI ranks
    box_size = 64.  # box size in Mpc/h
-   partition = Partition()
+   partition = Partition(3)  # by default, the dimension is 3
 
    # read GenericIO data in parallel
    data = pygio.read_genericio("m000p-499.haloproperties")

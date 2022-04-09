@@ -6,6 +6,7 @@ from mpi4py import MPI
 import numpy as np
 import sys, time
 from typing import List
+import itertools
 
 _comm = MPI.COMM_WORLD
 _rank = _comm.Get_rank()
@@ -47,13 +48,12 @@ class Partition:
     Parameters
     ----------
 
-    create_topo26 : boolean
-        If `True`, an additional graph communicator will be initialized
-        connecting all 26 direct neighbors symmetrically
+    dimension: int
+        Numer of dimensions of the volume cube. Default: 3
 
-    mpi_waittime : float
-        Time in seconds for which the initialization will wait, can fix certain
-        MPI issues if ranks are not ready (e.g. `PG with index not found`)
+    create_neighbor_topo : boolean
+        If `True`, an additional graph communicator will be initialized
+        connecting all direct neighbors (3**dimension - 1) symmetrically
 
     commensurate_topo : List[int]
         A proportional target topology for decomposition. When specified, a partition
@@ -69,7 +69,7 @@ class Partition:
     >>> partition = Partition(1.0)
     >>> partition.rank
     0
-    >>> partition.decomp
+    >>> partition.decomposition
     np.ndarray([2, 2, 2])
     >>> partition.coordinates
     np.ndarray([0, 0, 0])
@@ -83,14 +83,16 @@ class Partition:
 
     def __init__(
         self,
-        create_topo26: bool = False,
-        mpi_waittime: float = 0,
+        dimensions = 3,
+        *,
+        create_neighbor_topo: bool = False,
         commensurate_topo: List[int] = None,
     ):
+        self._dimensions = dimensions
         self._rank = _rank
         self._nranks = _nranks
         if commensurate_topo is None:
-            self._decomp = MPI.Compute_dims(_nranks, [0, 0, 0])
+            self._decomp = MPI.Compute_dims(_nranks, [0]*self._dimensions)
         else:
             nranks_factors = _factorize(self._nranks)
             decomp, remainder = _distribute_factors(nranks_factors, commensurate_topo)
@@ -98,58 +100,49 @@ class Partition:
             assert np.prod(decomp) == self._nranks
             self._decomp = decomp.tolist()
 
-        periodic = [True, True, True]
-        time.sleep(mpi_waittime)
+        periodic = [True]*self._dimensions
+
         self._topo = _comm.Create_cart(self._decomp, periods=periodic)
         self._coords = list(self._topo.coords)
-        time.sleep(mpi_waittime)
-        self._neighbors = np.empty((3, 3, 3), dtype=np.int32)
-        for i in range(-1, 2):
-            for j in range(-1, 2):
-                for k in range(-1, 2):
-                    coord = [
-                        (self._coords[0] + i) % self._decomp[0],
-                        (self._coords[1] + j) % self._decomp[1],
-                        (self._coords[2] + k) % self._decomp[2],
-                    ]
-                    neigh = self._topo.Get_cart_rank(coord)
-                    self._neighbors[i + 1, j + 1, k + 1] = neigh
-                    # self._neighbors.append(neigh)
 
-        self._extent = [1.0 / self._decomp[i] for i in range(3)]
-        self._origin = [self._coords[i] * self._extent[i] for i in range(3)]
+        self._neighbors = np.zeros([3]*self._dimensions, dtype=np.int32)
+        for idx in itertools.product([-1, 0, 1], repeat=self._dimensions):
+            coord = [(self._coords[d] + idx[d]) % self._decomp[d] for d in range(self._dimensions)]
+            neigh = self._topo.Get_cart_rank(coord)
+            self._neighbors[tuple(_i + 1 for _i in idx)] = neigh
 
-        # A graph topology linking all 26 neighbors
-        self._topo26 = None
-        self._neighbors26 = None
-        self._nneighbors26 = None
-        if create_topo26:
-            time.sleep(mpi_waittime)
-            neighbors26 = np.unique(
-                np.array(
-                    [n for n in self._neighbors.flatten() if n != self._rank],
-                    dtype=np.int32,
-                )
+        self._extent = [1.0 / self._decomp[i] for i in range(self._dimensions)]
+        self._origin = [self._coords[i] * self._extent[i] for i in range(self._dimensions)]
+
+        # A graph topology linking all neighbors
+        self._neighbor_topo = None
+        self._neighbor_ranks = None
+        if create_neighbor_topo:
+            neighbors = np.unique([n for n in self._neighbors.flatten() if n != self._rank]).astype(np.int32)
+            self._neighbor_topo = self._topo.Create_dist_graph_adjacent(
+                sources=neighbors, destinations=neighbors, reorder=False
             )
-            self._topo26 = self._topo.Create_dist_graph_adjacent(
-                sources=neighbors26, destinations=neighbors26, reorder=False
-            )
-            assert self._topo26.is_topo
-            inout_neighbors26 = self._topo26.inoutedges
-            assert len(inout_neighbors26[0]) == len(inout_neighbors26[1])
-            self._nneighbors26 = len(inout_neighbors26[0])
-            for i in range(self._nneighbors26):
-                if inout_neighbors26[0][i] != inout_neighbors26[1][i]:
+            assert self._neighbor_topo.is_topo
+            inout_neighbors = self._neighbor_topo.inoutedges
+            assert len(inout_neighbors[0]) == len(inout_neighbors[1])
+            for i in range(len(inout_neighbors[0])):
+                if inout_neighbors[0][i] != inout_neighbors[1][i]:
                     print(
-                        "topo 26: neighbors in sources and destinations are not ordered the same",
+                        "neighbor topo: neighbors in sources and destinations are not ordered the same",
                         file=sys.stderr,
                         flush=True,
                     )
                     self._topo.Abort()
-            self._neighbors26 = inout_neighbors26[0]
+            self._neighbor_ranks = inout_neighbors[0]
+
 
     def __del__(self):
         self._topo.Free()
+
+    @property
+    def dimensions(self):
+        """Dimension of the partitioned volume"""
+        return self._dimensions
 
     @property
     def comm(self):
@@ -157,10 +150,10 @@ class Partition:
         return self._topo
 
     @property
-    def comm26(self):
+    def comm_neighbor(self):
         """Graph MPI Topology / Communicator, connecting the neighboring ranks
         (symmetric)"""
-        return self._topo26
+        return self._neighbor_topo
 
     @property
     def rank(self):
@@ -173,7 +166,7 @@ class Partition:
         return self._nranks
 
     @property
-    def decomp(self):
+    def decomposition(self):
         """np.ndarray: the decomposition of the cubic volume: number of ranks along each dimension"""
         return self._decomp
 
@@ -192,40 +185,34 @@ class Partition:
         """np.ndarray: Cartesian coordinates of the origin of this processor"""
         return self._origin
 
-    def get_neighbor(self, dx: int, dy: int, dz: int) -> int:
-        """get the rank of the neighbor at relative position (dx, dy, dz)
+    def get_neighbor(self, di: List[int]) -> int:
+        """get the rank of the neighbor at relative position (dx, dy, dz, ...)
 
         Parameters
         ----------
 
-        dx, dy, dz: int
-            relative position, one of `[-1, 0, 1]`
+        di: List[int]
+            list of relative coordinates, one of `[-1, 0, 1]`.
         """
-        return self._neighbors[dx + 1, dy + 1, dz + 1]
+        assert len(di) == self._dimensions
+        return self._neighbors[np.array(di)+1]
 
     @property
     def neighbors(self):
-        """np.ndarray: a 3x3x3 array with the ranks of the neighboring processes
-        (`neighbors[1,1,1]` is this processor)"""
+        """np.ndarray: a 3^d dimensional array with the ranks of the neighboring processes
+        (`neighbors[1,1,1, ...]` is this processor)"""
         return self._neighbors
 
     @property
-    def neighbors26(self):
+    def neighbor_ranks(self):
         """np.ndarray: a flattened list of the unique neighboring ranks"""
-        return self._neighbors26
-
-    @property
-    def neighbors26_count(self):
-        """int: number of unique neighboring ranks"""
-        return self._nneighbors26
+        return self._neighbor_ranks
 
     @property
     def ranklist(self):
         """np.ndarray: A complete list of ranks, aranged by their coordinates.
         The array has shape `partition.decomp`"""
-        ranklist = np.empty(self.decomp, dtype=np.int32)
-        for i in range(self.decomp[0]):
-            for j in range(self.decomp[1]):
-                for k in range(self.decomp[2]):
-                    ranklist[i, j, k] = self._topo.Get_cart_rank([i, j, k])
+        ranklist = np.empty(self.decomposition, dtype=np.int32)
+        for idx in itertools.product(*map(range, self.decomposition)):
+            ranklist[tuple(idx)] = self._topo.Get_cart_rank(idx)
         return ranklist

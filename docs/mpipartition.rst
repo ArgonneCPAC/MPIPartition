@@ -59,6 +59,7 @@ and then distribute them according to the positions
    box_size = 1.0
 
    # partitioning a box with the available MPI ranks
+   # if no argument is specified, the dimension of the volume is 3
    partition = Partition()
 
    # number of random particles per rank

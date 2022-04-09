@@ -1,5 +1,5 @@
 from .partition import Partition, MPI
-from typing import Mapping, Tuple, Union
+from typing import Mapping, List, Union
 import sys
 import numpy as np
 
@@ -10,15 +10,15 @@ def distribute(
     partition: Partition,
     box_size: float,
     data: ParticleDataT,
-    xyz_keys: Tuple[str, str, str],
+    coord_keys: List[str],
     *,
     verbose: Union[bool, int] = False,
     verify_count: bool = True,
 ) -> ParticleDataT:
     """Distribute data among MPI ranks according to data position and volume partition
 
-    The position of each TreeData element is given by the x, y, and z columns
-    specified with `xyz_keys`.
+    The position of each TreeData element is given by the data columns
+    specified with `coord_keys`.
 
     Parameters
     ----------
@@ -33,7 +33,7 @@ def distribute(
     data:
         The treenode / coretree data that should be distributed
 
-    xyz_keys:
+    coord_keys:
         The columns in `data` that define the position of the object
 
     verbose:
@@ -51,6 +51,8 @@ def distribute(
         owns)
 
     """
+    assert len(coord_keys) == partition.dimensions
+
     # get some MPI and partition parameters
     nranks = partition.nranks
     if nranks == 1:
@@ -58,35 +60,39 @@ def distribute(
 
     rank = partition.rank
     comm = partition.comm
+    dimensions = partition.dimensions
     ranklist = np.array(partition.ranklist)
     extent = box_size * np.array(partition.extent)
 
     # count number of particles we have
-    total_to_send = len(data[xyz_keys[0]])
+    total_to_send = len(data[coord_keys[0]])
 
     if total_to_send > 0:
         # Check validity of coordinates
-        for i in range(3):
-            _x = data[xyz_keys[i]]
+        for i in range(dimensions):
+            _x = data[coord_keys[i]]
             _min = _x.min()
             _max = _x.max()
             if _min < 0 or _max > box_size:
                 print(
-                    f"Error in distribute: position {xyz_keys[i]} out of range: [{_min}, {_max}]",
+                    f"Error in distribute: position {coord_keys[i]} out of range: [{_min}, {_max}]",
                     file=sys.stderr,
                     flush=True,
                 )
                 comm.Abort()
 
         # Find home of each particle
-        _i = (data[xyz_keys[0]] / extent[0]).astype(np.int32)
-        _j = (data[xyz_keys[1]] / extent[1]).astype(np.int32)
-        _k = (data[xyz_keys[2]] / extent[2]).astype(np.int32)
+        idx = np.array([data[coord_keys[i]] / extent[i] for i in range(dimensions)]).astype(np.int32)
+        idx = np.clip(idx, 0, np.array(partition.decomp)[:, np.newaxis]-1)
+        home_idx = ranklist[tuple(idx)]
+        # _i = (data[xyz_keys[0]] / extent[0]).astype(np.int32)
+        # _j = (data[xyz_keys[1]] / extent[1]).astype(np.int32)
+        # _k = (data[xyz_keys[2]] / extent[2]).astype(np.int32)
 
-        _i = np.clip(_i, 0, partition.decomp[0] - 1)
-        _j = np.clip(_j, 0, partition.decomp[1] - 1)
-        _k = np.clip(_k, 0, partition.decomp[2] - 1)
-        home_idx = ranklist[_i, _j, _k]
+        # _i = np.clip(_i, 0, partition.decomp[0] - 1)
+        # _j = np.clip(_j, 0, partition.decomp[1] - 1)
+        # _k = np.clip(_k, 0, partition.decomp[2] - 1)
+        # home_idx = ranklist[_i, _j, _k]
     else:
         home_idx = np.empty(0, dtype=np.int32)
 
@@ -133,7 +139,7 @@ def distribute(
 
     if verify_count:
         local_counts = np.array(
-            [len(data[xyz_keys[0]]), len(data_new[xyz_keys[0]])], dtype=np.int64
+            [len(data[coord_keys[0]]), len(data_new[coord_keys[0]])], dtype=np.int64
         )
         global_counts = np.empty_like(local_counts)
         comm.Reduce(local_counts, global_counts, op=MPI.SUM, root=0)

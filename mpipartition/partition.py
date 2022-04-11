@@ -57,8 +57,8 @@ class Partition:
 
     commensurate_topo : List[int]
         A proportional target topology for decomposition. When specified, a partition
-        will be created so that `commensurate_topo[i] % partition.decomp[i] == 0` for
-        all `i`. The code will raise a RuntimeError if such a decomposition is not
+        will be created so that `commensurate_topo[i] % partition.decomposition[i] == 0`
+        for all `i`. The code will raise a RuntimeError if such a decomposition is not
         possible.
 
     Examples
@@ -92,26 +92,26 @@ class Partition:
         self._rank = _rank
         self._nranks = _nranks
         if commensurate_topo is None:
-            self._decomp = MPI.Compute_dims(_nranks, [0]*self._dimensions)
+            self._decomposition = MPI.Compute_dims(_nranks, [0]*self._dimensions)
         else:
             nranks_factors = _factorize(self._nranks)
-            decomp, remainder = _distribute_factors(nranks_factors, commensurate_topo)
-            assert np.all(decomp * remainder == np.array(commensurate_topo))
-            assert np.prod(decomp) == self._nranks
-            self._decomp = decomp.tolist()
+            decomposition, remainder = _distribute_factors(nranks_factors, commensurate_topo)
+            assert np.all(decomposition * remainder == np.array(commensurate_topo))
+            assert np.prod(decomposition) == self._nranks
+            self._decomposition = decomposition.tolist()
 
         periodic = [True]*self._dimensions
 
-        self._topo = _comm.Create_cart(self._decomp, periods=periodic)
+        self._topo = _comm.Create_cart(self._decomposition, periods=periodic)
         self._coords = list(self._topo.coords)
 
         self._neighbors = np.zeros([3]*self._dimensions, dtype=np.int32)
         for idx in itertools.product([-1, 0, 1], repeat=self._dimensions):
-            coord = [(self._coords[d] + idx[d]) % self._decomp[d] for d in range(self._dimensions)]
+            coord = [(self._coords[d] + idx[d]) % self._decomposition[d] for d in range(self._dimensions)]
             neigh = self._topo.Get_cart_rank(coord)
             self._neighbors[tuple(_i + 1 for _i in idx)] = neigh
 
-        self._extent = [1.0 / self._decomp[i] for i in range(self._dimensions)]
+        self._extent = [1.0 / self._decomposition[i] for i in range(self._dimensions)]
         self._origin = [self._coords[i] * self._extent[i] for i in range(self._dimensions)]
 
         # A graph topology linking all neighbors
@@ -168,7 +168,7 @@ class Partition:
     @property
     def decomposition(self):
         """np.ndarray: the decomposition of the cubic volume: number of ranks along each dimension"""
-        return self._decomp
+        return self._decomposition
 
     @property
     def coordinates(self):
@@ -211,7 +211,7 @@ class Partition:
     @property
     def ranklist(self):
         """np.ndarray: A complete list of ranks, aranged by their coordinates.
-        The array has shape `partition.decomp`"""
+        The array has shape `partition.decomposition`"""
         ranklist = np.empty(self.decomposition, dtype=np.int32)
         for idx in itertools.product(*map(range, self.decomposition)):
             ranklist[tuple(idx)] = self._topo.Get_cart_rank(idx)

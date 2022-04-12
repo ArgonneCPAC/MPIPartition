@@ -11,40 +11,43 @@ jobs:
     name: Build and gh-pages
     runs-on: ubuntu-latest
     steps:
-      # https://github.com/marketplace/actions/checkout
-      - uses: actions/checkout@v2
+
+      - name: check out
+        uses: actions/checkout@v2
         with:
           fetch-depth: 0
           lfs: true
-      # https://github.com/marketplace/actions/setup-python
-      # ^-- This gives info on matrix testing.
+
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
           python-version: 3.8
+
       - name: Install MPI
         uses: mpi4py/setup-mpi@v1
         with:
           mpi: mpich
+
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
+
       - name: Load cached venv
         id: cached-poetry-dependencies
         uses: actions/cache@v2
         with:
           path: .venv
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/pyproject.toml') }}
-      # https://docs.github.com/en/actions/guides/building-and-testing-python#installing-dependencies
-      # ^-- This gives info on installing dependencies with pip
+
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
       - name: Install library
         run: poetry install --no-interaction
+
       - name: Debugging information
         run: |
           source .venv/bin/activate
@@ -60,6 +63,7 @@ jobs:
           python -V
           pip list --not-required
           pip list
+
       # Build
       - uses: ammaraskar/sphinx-problem-matcher@master
       - name: Build Sphinx docs
@@ -88,6 +92,7 @@ jobs:
           ( git branch gh-pages remotes/origin/gh-pages && git clone .. --branch=gh-pages _gh-pages/ ) || mkdir _gh-pages
           rm -rf _gh-pages/.git/
           mkdir -p _gh-pages/branch/
+
       # If a push and default branch, copy build to _gh-pages/ as the "main"
       # deployment.
       - name: Copy new build (default branch)

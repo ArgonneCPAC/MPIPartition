@@ -82,18 +82,13 @@ def distribute(
                 comm.Abort()
 
         # Find home of each particle
-        idx = np.array([data[coord_keys[i]] / extent[i] for i in range(dimensions)]).astype(np.int32)
-        idx = np.clip(idx, 0, np.array(partition.decomposition)[:, np.newaxis]-1)
+        idx = np.array(
+            [data[coord_keys[i]] / extent[i] for i in range(dimensions)]
+        ).astype(np.int32)
+        idx = np.clip(idx, 0, np.array(partition.decomposition)[:, np.newaxis] - 1)
         home_idx = ranklist[tuple(idx)]
-        # _i = (data[xyz_keys[0]] / extent[0]).astype(np.int32)
-        # _j = (data[xyz_keys[1]] / extent[1]).astype(np.int32)
-        # _k = (data[xyz_keys[2]] / extent[2]).astype(np.int32)
-
-        # _i = np.clip(_i, 0, partition.decomposition[0] - 1)
-        # _j = np.clip(_j, 0, partition.decomposition[1] - 1)
-        # _k = np.clip(_k, 0, partition.decomposition[2] - 1)
-        # home_idx = ranklist[_i, _j, _k]
     else:
+        # there are no particles on this rank
         home_idx = np.empty(0, dtype=np.int32)
 
     # sort by rank

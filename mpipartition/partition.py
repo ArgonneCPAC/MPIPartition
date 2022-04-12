@@ -83,42 +83,55 @@ class Partition:
 
     def __init__(
         self,
-        dimensions = 3,
+        dimensions=3,
         *,
         create_neighbor_topo: bool = False,
         commensurate_topo: List[int] = None,
     ):
+        self._topo = None
+        self._neighbor_topo = None
+        assert dimensions > 0
+        assert type(dimensions) == int
         self._dimensions = dimensions
         self._rank = _rank
         self._nranks = _nranks
         if commensurate_topo is None:
-            self._decomposition = MPI.Compute_dims(_nranks, [0]*self._dimensions)
+            self._decomposition = MPI.Compute_dims(_nranks, [0] * self._dimensions)
         else:
             nranks_factors = _factorize(self._nranks)
-            decomposition, remainder = _distribute_factors(nranks_factors, commensurate_topo)
+            decomposition, remainder = _distribute_factors(
+                nranks_factors, commensurate_topo
+            )
             assert np.all(decomposition * remainder == np.array(commensurate_topo))
             assert np.prod(decomposition) == self._nranks
             self._decomposition = decomposition.tolist()
 
-        periodic = [True]*self._dimensions
+        periodic = [True] * self._dimensions
 
         self._topo = _comm.Create_cart(self._decomposition, periods=periodic)
         self._coords = list(self._topo.coords)
 
-        self._neighbors = np.zeros([3]*self._dimensions, dtype=np.int32)
+        self._neighbors = np.zeros([3] * self._dimensions, dtype=np.int32)
         for idx in itertools.product([-1, 0, 1], repeat=self._dimensions):
-            coord = [(self._coords[d] + idx[d]) % self._decomposition[d] for d in range(self._dimensions)]
+            coord = [
+                (self._coords[d] + idx[d]) % self._decomposition[d]
+                for d in range(self._dimensions)
+            ]
             neigh = self._topo.Get_cart_rank(coord)
             self._neighbors[tuple(_i + 1 for _i in idx)] = neigh
 
         self._extent = [1.0 / self._decomposition[i] for i in range(self._dimensions)]
-        self._origin = [self._coords[i] * self._extent[i] for i in range(self._dimensions)]
+        self._origin = [
+            self._coords[i] * self._extent[i] for i in range(self._dimensions)
+        ]
 
         # A graph topology linking all neighbors
         self._neighbor_topo = None
         self._neighbor_ranks = None
         if create_neighbor_topo:
-            neighbors = np.unique([n for n in self._neighbors.flatten() if n != self._rank]).astype(np.int32)
+            neighbors = np.unique(
+                [n for n in self._neighbors.flatten() if n != self._rank]
+            ).astype(np.int32)
             self._neighbor_topo = self._topo.Create_dist_graph_adjacent(
                 sources=neighbors, destinations=neighbors, reorder=False
             )
@@ -135,9 +148,11 @@ class Partition:
                     self._topo.Abort()
             self._neighbor_ranks = inout_neighbors[0]
 
-
     def __del__(self):
-        self._topo.Free()
+        if self._neighbor_topo is not None:
+            self._neighbor_topo.Free()
+        if self._topo is not None:
+            self._topo.Free()
 
     @property
     def dimensions(self):
@@ -195,7 +210,7 @@ class Partition:
             list of relative coordinates, one of `[-1, 0, 1]`.
         """
         assert len(di) == self._dimensions
-        return self._neighbors[np.array(di)+1]
+        return self._neighbors[np.array(di) + 1]
 
     @property
     def neighbors(self):

@@ -89,7 +89,6 @@ def overload(
         if n != rank:
             exchange_indices[n] = np.union1d(exchange_indices[n], np.nonzero(mask)[0])
 
-    # TRIAL & ERROR
     def _recursive_edge(mask: np.ndarray, fixed_indices: List[int], remaining_indices: List[int]):
         remaining = len(remaining_indices)
         assert len(fixed_indices) + remaining == dimensions

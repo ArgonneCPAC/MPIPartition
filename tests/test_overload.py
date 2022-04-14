@@ -64,9 +64,47 @@ def _overloading(dimensions, n, ol):
     assert np.sum(mask_should_have) == len(data[labels[0]])
 
 
+def _check_0overload(dimensions, n):
+    assert dimensions < 7
+    labels = "xyzuvw"[:dimensions]
+
+    partition = Partition(dimensions)
+
+    rank = partition.rank
+    nranks = partition.nranks
+
+    np.random.seed(rank)
+    data = {
+        x: np.random.uniform(0, 1, n) * partition.extent[i] + partition.origin[i]
+        for i, x in enumerate(labels)
+    }
+    data["s"] = rank * np.ones(n, dtype=np.uint16)
+
+    data_ol = overload(partition, 1.0, data, 0.0, labels)
+    # Check that we haven't changed any of the data
+    assert len(data_ol[labels[0]] == n)
+    assert np.all(data["s"] == rank)
+
+
 @pytest.mark.mpi
 def test_1d():
+    _check_0overload(1, 1000)
     _overloading(1, 1000, 0.1)
+
+
+@pytest.mark.mpi
+def test_2d():
+    _check_0overload(2, 100)
     _overloading(2, 100, 0.1)
+
+
+@pytest.mark.mpi
+def test_3d():
+    _check_0overload(3, 10)
     _overloading(3, 10, 0.05)
-    _overloading(4, 2, 0.05)
+
+
+@pytest.mark.mpi
+def test_4d():
+    _check_0overload(4, 4)
+    _overloading(4, 4, 0.05)

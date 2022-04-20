@@ -1,6 +1,7 @@
 from .partition import Partition
-from typing import Mapping, Tuple, Union, List
+from typing import Mapping, Union, List
 import numpy as np
+import itertools
 
 ParticleDataT = Mapping[str, np.ndarray]
 
@@ -89,55 +90,17 @@ def overload(
         if n != rank:
             exchange_indices[n] = np.union1d(exchange_indices[n], np.nonzero(mask)[0])
 
-    def _recursive_edge(mask: np.ndarray, fixed_indices: List[int], remaining_indices: List[int]):
-        remaining = len(remaining_indices)
-        assert len(fixed_indices) + remaining == dimensions
-        if remaining == 0:
-            return
-        for d in range(remaining):
-            for k in [-1, 1]:
-                maskk = mask & (overload[remaining_indices[d]] == k)
-                # Edge
-                add_exchange_indices(maskk, fixed_indices + [0]*d + [k] + [0]*(remaining-d-1))
-                # Corner
-                _recursive_edge(maskk, fixed_indices + [0]*d + [k], remaining_indices[d+1:])
-    _recursive_edge(np.ones_like(overload[0], dtype=np.bool_), [], list(range(dimensions)))
+    corners = itertools.product([0, -1, 1], repeat=partition.dimensions)
+    # skip first: will be [0,0,0]
+    next(corners)
 
-    # As an example, this is for 3 dimensions (original code)
-    # for i in [-1, 1]:
-    #     # face
-    #     maski = overload[0] == i
-    #     add_exchange_indices(maski, [i, 0, 0])
-
-    #     for j in [-1, 1]:
-    #         # edge
-    #         maskj = maski & (overload[1] == j)
-    #         add_exchange_indices(maskj, [i, j, 0])
-
-    #         for k in [-1, 1]:
-    #             # corner
-    #             maskk = maskj & (overload[2] == k)
-    #             add_exchange_indices(maskk, [i, j, k])
-
-    #     for k in [-1, 1]:
-    #         # edge
-    #         maskk = maski & (overload[2] == k)
-    #         add_exchange_indices(maskk, [i, 0, k])
-
-    # for j in [-1, 1]:
-    #     # face
-    #     maskj = overload[1] == j
-    #     add_exchange_indices(maskj, [0, j, 0])
-
-    #     for k in [-1, 1]:
-    #         # edge
-    #         maskk = maskj & (overload[2] == k)
-    #         add_exchange_indices(maskk, [0, j, k])
-
-    # for k in [-1, 1]:
-    #     # face
-    #     maskk = overload[2] == k
-    #     add_exchange_indices(maskk, [0, 0, k])
+    for corner in corners:
+        mask = np.ones_like(overload[0], dtype=np.bool_)
+        for d in range(partition.dimensions):
+            if corner[d] == 0:
+                continue
+            mask &= overload[d] == corner[d]
+        add_exchange_indices(mask, corner)
 
     # Check how many elements will be sent
     send_counts = np.array([len(i) for i in exchange_indices], dtype=np.int32)

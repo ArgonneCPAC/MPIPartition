@@ -113,13 +113,13 @@ the `GenericIO <https://git.cels.anl.gov/hacc/genericio>`_ data format):
    data = pygio.read_genericio("m000p-499.haloproperties")
 
    # distribute
-   data = distribute(partition, box_size, data, [f"fof_halo_center{x}" for x in "xyz"])
+   data = distribute(partition, box_size, data, [f"fof_halo_center_{x}" for x in "xyz"])
 
    # mark "owned" data with rank (allows differentiating owned and overloaded data)
    data["status"] = partition.rank * np.ones(len(data["fof_halo_center_x"]), dtype=np.uint16)
 
    # overload by 4Mpc/h
-   data = overload(partition, box_size, data, 4., [f"fof_halo_center{x}" for x in "xyz"])
+   data = overload(partition, box_size, data, 4., [f"fof_halo_center_{x}" for x in "xyz"])
 
    # now we can do analysis such as 2pt correlation functions (up to 4Mpc/h)
    # or neighbor finding, etc.

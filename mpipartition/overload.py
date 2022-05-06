@@ -1,7 +1,9 @@
-from .partition import Partition
-from typing import Mapping, Union, List
-import numpy as np
 import itertools
+from typing import List, Mapping, Union
+
+import numpy as np
+
+from .partition import Partition
 
 ParticleDataT = Mapping[str, np.ndarray]
 

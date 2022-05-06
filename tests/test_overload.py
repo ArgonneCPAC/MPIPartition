@@ -3,9 +3,10 @@
 """Tests for `mpipartition` package."""
 
 
-import pytest
-from mpipartition import Partition, distribute, overload
 import numpy as np
+import pytest
+
+from mpipartition import Partition, overload
 
 
 def _overloading(dimensions, n, ol):

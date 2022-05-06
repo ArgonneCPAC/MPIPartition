@@ -2,9 +2,10 @@
 
 """Tests for `mpipartition` package."""
 
-import pytest
-from mpipartition import Partition
 import numpy as np
+import pytest
+
+from mpipartition import Partition
 
 
 @pytest.mark.xfail

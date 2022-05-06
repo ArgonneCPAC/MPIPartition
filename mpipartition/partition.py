@@ -2,11 +2,12 @@
 
 """
 
-from mpi4py import MPI
-import numpy as np
-import sys, time
-from typing import List
 import itertools
+import sys
+from typing import List
+
+import numpy as np
+from mpi4py import MPI
 
 _comm = MPI.COMM_WORLD
 _rank = _comm.Get_rank()

@@ -49,6 +49,7 @@ Installing the development version from the GIT repository
 Requirements
 ------------
 
+* Python >= 3.7
 * `mpi4py <https://mpi4py.readthedocs.io/en/stable/>`_: MPI for Python
 * `numpy <https://numpy.org/>`_: Python array library
 

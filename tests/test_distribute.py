@@ -2,9 +2,10 @@
 
 """Tests for `mpipartition.distribute` function"""
 
-from mpipartition import Partition, distribute
 import numpy as np
 import pytest
+
+from mpipartition import Partition, distribute
 
 
 def create_and_distribute(dimensions, N):

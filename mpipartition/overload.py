@@ -17,7 +17,7 @@ def overload(
     *,
     verbose: Union[bool, int] = False,
 ):
-    """Copy data within an overload length to the 26 neighboring ranks
+    """Copy data within an overload length to the neighboring ranks
 
     This method assumes that the volume cube is periodic and will wrap the data
     around the boundary interfaces.
@@ -77,7 +77,7 @@ def overload(
 
     # Find all overload regions each particle should be in
     overload = {}
-    for (i, x) in enumerate(coord_keys):
+    for i, x in enumerate(coord_keys):
         _i = np.zeros_like(data[x], dtype=np.int8)
         _i[data[x] < origin[i] + overload_length] = -1
         _i[data[x] > origin[i] + extent[i] - overload_length] = 1

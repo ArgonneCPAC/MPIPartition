@@ -49,9 +49,9 @@ def exchange(
         exchange_Allgatherv = exchange_comm.Allgatherv
 
     else:
-        # exchange particles with the 26 neighboring ranks
-        exchange_comm = partition.comm26
-        exchange_nranks = partition.neighbors26_count
+        # exchange particles with the neighboring ranks
+        exchange_comm = partition.comm_neighbor
+        exchange_nranks = partition.comm_neighbor.Get_size()
         exchange_Alltoall = exchange_comm.Neighbor_alltoall
         exchange_Alltoallv = exchange_comm.Neighbor_alltoallv
         exchange_Allgather = exchange_comm.Neighbor_allgather
@@ -237,7 +237,7 @@ def exchange(
     ) = totalcounts
 
     if verbose and rank == 0:
-        print(f"exchange summary ({'all2all' if do_all2all else '26-neighbors'}):")
+        print(f"exchange summary ({'all2all' if do_all2all else 'neighbors'}):")
         print(
             f"   Ntot -> Ntot: {totalcount_before:10d} -> {totalcount_after:10d} (should remain the same)"
         )
@@ -255,7 +255,7 @@ def exchange(
         )
         comm.Abort()
 
-    # if we were not able to assign all orphans to the 26 neighbors, try all2all
+    # if we were not able to assign all orphans to the neighbors, try all2all
     if not do_all2all and totalcount_missmatch_after > 0:
         if verbose and rank == 0:
             print(

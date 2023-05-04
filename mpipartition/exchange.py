@@ -21,10 +21,12 @@ def exchange(
 ):
     """Distribute data among neighboring ranks and all2all by a key
 
-    This function will assign data to the rank that owns the key. The keys that the local rank owns are given by
-    ``local_keys``, which should be unique. The keys of the data that the local rank currently has is in ``data[key]``.
-    Certain values can be ignored by setting filter_key to that value or by setting filter_key to a (vectorized) function
-    that returns ``True`` for keys that should be redistributed and ``False`` for keys that should be ignored.
+    This function will assign data to the rank that owns the key. The keys that the
+    local rank owns are given by ``local_keys``, which should be unique. The keys of the
+    data that the local rank currently has is in ``data[key]``. Certain values can be
+    ignored by setting filter_key to that value or by setting filter_key to a
+    (vectorized) function that returns ``True`` for keys that should be redistributed
+    and ``False`` for keys that should be ignored.
 
     Parameters
     ----------
@@ -145,7 +147,8 @@ def exchange(
         orphan_requests_send_counts[rank] != 0 or orphan_requests_recv_counts[rank] != 0
     ):
         print(
-            f"Error in exchange: rank {rank} is asking itself for an orphan halo: {orphan_requests_send_counts[rank]}/{orphan_requests_recv_counts[rank]}",
+            f"Error in exchange: rank {rank} is asking itself for an orphan halo: "
+            f"{orphan_requests_send_counts[rank]}/{orphan_requests_recv_counts[rank]}",
             file=sys.stderr,
             flush=True,
         )
@@ -239,17 +242,20 @@ def exchange(
     if verbose and rank == 0:
         print(f"exchange summary ({'all2all' if do_all2all else 'neighbors'}):")
         print(
-            f"   Ntot -> Ntot: {totalcount_before:10d} -> {totalcount_after:10d} (should remain the same)"
+            f"   Ntot -> Ntot: {totalcount_before:10d} -> {totalcount_after:10d} "
+            "(should remain the same)"
         )
         print(
-            f"   Orph -> Orph: {totalcount_missmatch:10d} -> {totalcount_missmatch_after:10d} (should be 0 after)"
+            f"   Orph -> Orph: {totalcount_missmatch:10d} -> "
+            f"{totalcount_missmatch_after:10d} (should be 0 after)"
         )
         print("", flush=True)
 
     # did we conserve number of particles?
     if rank == 0 and totalcount_before != totalcount_after:
         print(
-            f"Error in exchange: Lost halos during progenitor exchange: {totalcount_before} -> {totalcount_after}",
+            "Error in exchange: Lost halos during progenitor exchange: "
+            f"{totalcount_before} -> {totalcount_after}",
             file=sys.stderr,
             flush=True,
         )
@@ -259,7 +265,8 @@ def exchange(
     if not do_all2all and totalcount_missmatch_after > 0:
         if verbose and rank == 0:
             print(
-                f"exchange all2all since neighbor exchange was not able to assign all: {totalcount_missmatch} -> {totalcount_missmatch_after}",
+                "exchange all2all since neighbor exchange was not able to assign all: "
+                f"{totalcount_missmatch} -> {totalcount_missmatch_after}",
                 flush=True,
             )
         return exchange(
@@ -273,31 +280,38 @@ def exchange(
             replace_notfound_key=replace_notfound_key,
         )
 
-    # if we are still not able to assign all orphans, replace key or abort after printing some debug messages
+    # if we are still not able to assign all orphans, replace key or abort after
+    # printing some debug messages
     if replace_notfound_key is not None and localcount_missmatch_after > 0:
         d = data_new[key]
         d[np.isin(d, missing_keys)] = replace_notfound_key
     for i in range(nranks):
-        if rank == i:
-            if localcount_missmatch_after != 0:
-                print(
-                    f"Warning from rank {rank} in exchange: Unable to assign all progenitors to correct ranks (failed for {localcount_missmatch_after} out of {localcount_missmatch})"
-                )
-                print(f"Could not assign keys: ", missing_keys)
-                print("", flush=True)
+        if rank == i and localcount_missmatch_after != 0:
+            print(
+                f"Warning from rank {rank} in exchange: Unable to assign all "
+                f"progenitors to correct ranks (failed for "
+                f"{localcount_missmatch_after} out of {localcount_missmatch})"
+            )
+            print("Could not assign keys: ", missing_keys)
+            print("", flush=True)
         comm.Barrier()
 
     if rank == 0 and totalcount_missmatch_after != 0:
         if replace_notfound_key is None:
             print(
-                f"Error in exchange: Unable to assign all progenitors to correct ranks (tried to reassign {totalcount_missmatch}, failed for {totalcount_missmatch_after})",
+                f"Error in exchange: Unable to assign all progenitors to correct ranks "
+                f"(tried to reassign {totalcount_missmatch}, failed for "
+                f"{totalcount_missmatch_after})",
                 file=sys.stderr,
                 flush=True,
             )
             comm.Abort()
         else:
             print(
-                f"Warning in exchange: Unable to assign all progenitors to correct ranks (tried to reassign {totalcount_missmatch}, failed for {totalcount_missmatch_after}), replacing missing values with {replace_notfound_key}",
+                f"Warning in exchange: Unable to assign all progenitors to correct "
+                f"ranks (tried to reassign {totalcount_missmatch}, failed for "
+                f"{totalcount_missmatch_after}), replacing missing values with "
+                f"{replace_notfound_key}",
                 flush=True,
             )
 

@@ -53,7 +53,7 @@ def exchange(
     else:
         # exchange particles with the neighboring ranks
         exchange_comm = partition.comm_neighbor
-        exchange_nranks = exchange_comm.Get_dist_neighbors_count()
+        exchange_nranks = len(partition.neighbor_ranks)
         exchange_Alltoall = exchange_comm.Neighbor_alltoall
         exchange_Alltoallv = exchange_comm.Neighbor_alltoallv
         exchange_Allgather = exchange_comm.Neighbor_allgather

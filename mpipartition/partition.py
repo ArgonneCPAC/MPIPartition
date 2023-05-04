@@ -90,7 +90,6 @@ class Partition:
         commensurate_topo: List[int] = None,
     ):
         self._topo = None
-        self._neighbor_topo = None
         assert dimensions > 0
         assert type(dimensions) == int
         self._dimensions = dimensions

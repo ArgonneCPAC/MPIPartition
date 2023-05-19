@@ -107,3 +107,6 @@ ENV/
 # IDE settings
 .vscode/
 .idea/
+
+# notes
+notebooks/

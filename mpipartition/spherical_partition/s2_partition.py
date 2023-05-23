@@ -128,6 +128,7 @@ def _print_edge_to_area_ratio(segments: List[S2Segment]):
 
 class S2Partition:
     # parition properties
+    comm: MPI.Comm
     nranks: int
     theta_cap: float
     ring_thetas: npt.NDArray[np.float64]
@@ -141,6 +142,7 @@ class S2Partition:
     s2_segment: S2Segment
 
     def __init__(self, equal_area: bool = True, verbose: bool = False):
+        self.comm = _comm
         self.rank = _rank
         self.nranks = _nranks
         self.equal_area = equal_area

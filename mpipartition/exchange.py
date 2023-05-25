@@ -286,7 +286,7 @@ def exchange(
         d = data_new[key]
         d[np.isin(d, missing_keys)] = replace_notfound_key
     for i in range(nranks):
-        if rank == i and localcount_missmatch_after != 0:
+        if rank == i and localcount_missmatch_after != 0 and verbose > 1:
             print(
                 f"Warning from rank {rank} in exchange: Unable to assign all "
                 f"progenitors to correct ranks (failed for "
@@ -306,7 +306,7 @@ def exchange(
                 flush=True,
             )
             comm.Abort()
-        else:
+        elif verbose:
             print(
                 f"Warning in exchange: Unable to assign all progenitors to correct "
                 f"ranks (tried to reassign {totalcount_missmatch}, failed for "

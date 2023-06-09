@@ -11,40 +11,50 @@ ParticleDataT = Mapping[str, np.ndarray]
 def s2_distribute(
     partition: S2Partition,
     data: ParticleDataT,
-    coord_keys: List[str],
     *,
+    theta_key: str = "theta",
+    phi_key: str = "phi",
     verbose: Union[bool, int] = False,
     verify_count: bool = True,
     validate_home: bool = False,
 ) -> ParticleDataT:
-    assert len(coord_keys) == 2
-    theta = coord_keys[0]
-    phi = coord_keys[1]
-
     # count number of particles we have
-    total_to_send = len(data[coord_keys[0]])
+    total_to_send = len(data[theta_key])
 
     # verify data is normalized
-    assert np.all(data[theta] >= 0)
-    assert np.all(data[theta] <= np.pi)
-    assert np.all(data[phi] >= 0)
-    assert np.all(data[phi] <= 2 * np.pi)
+    assert np.all(data[theta_key] >= 0)
+    assert np.all(data[theta_key] < np.pi)
+    assert np.all(data[phi_key] >= 0)
+    assert np.all(data[phi_key] < 2 * np.pi)
 
-    # ring idx: -1=cap, 0=first ring, 1=second ring, etc.
+    # ring idx: 0=cap, 1=first ring, 2=second ring, etc.
     if partition.equal_area:
-        ring_idx = np.digitize(data[theta], partition.ring_thetas, right=True)
+        ring_idx = np.digitize(data[theta_key], partition.ring_thetas)
     else:  # equal theta
-        assert partition.ring_dtheta is not None
-        ring_idx = int((data[theta] - partition.theta_cap) // partition.ring_dtheta)
+        if partition.nranks == 2:
+            ring_idx = (data[theta_key] > partition.theta_cap).astype(np.int32)
+        else:
+            assert partition.ring_dtheta is not None
+            ring_idx = (
+                (data[theta_key] - partition.theta_cap) // partition.ring_dtheta
+            ).astype(np.int32) + 1
+            ring_idx = np.clip(ring_idx, 0, len(partition.ring_segments) + 1)
 
     phi_idx = np.zeros_like(ring_idx, dtype=np.int32)
-    mask_ring = (ring_idx >= 0) & (ring_idx < len(partition.ring_segments))
-    phi_idx[mask_ring] = (
-        phi[mask_ring] / (2 * np.pi) * partition.ring_segments[ring_idx[mask_ring]]
+    mask_is_on_ring = (ring_idx > 0) & (ring_idx <= len(partition.ring_segments))
+    phi_idx[mask_is_on_ring] = (
+        data[phi_key][mask_is_on_ring]
+        / (2 * np.pi)
+        * partition.ring_segments[ring_idx[mask_is_on_ring] - 1]
     ).astype(np.int32)
 
-    # add one for the cap
-    home_idx = np.sum(partition.ring_segments[:ring_idx], axis=0) + phi_idx + 1
+    # rank index where each ring starts
+    ring_start_idx = np.zeros(len(partition.ring_segments) + 2, dtype=np.int32)
+    ring_start_idx[1] = 1
+    ring_start_idx[2:] = np.cumsum(partition.ring_segments) + 1
+
+    # rank index of each particle
+    home_idx = ring_start_idx[ring_idx] + phi_idx
 
     assert np.all(home_idx >= 0)
     assert np.all(home_idx < partition.nranks)
@@ -94,7 +104,7 @@ def s2_distribute(
 
     if verify_count:
         local_counts = np.array(
-            [len(data[coord_keys[0]]), len(data_new[coord_keys[0]])], dtype=np.int64
+            [len(data[theta_key]), len(data_new[theta_key])], dtype=np.int64
         )
         global_counts = np.empty_like(local_counts)
         partition.comm.Reduce(local_counts, global_counts, op=MPI.SUM, root=0)
@@ -108,9 +118,9 @@ def s2_distribute(
             partition.comm.Abort()
 
     if validate_home:
-        assert np.all(data_new[theta] >= partition.s2_segment.theta_range[0])
-        assert np.all(data_new[theta] < partition.s2_segment.theta_range[1])
-        assert np.all(data_new[phi] >= partition.s2_segment.phi_range[0])
-        assert np.all(data_new[phi] < partition.s2_segment.phi_range[1])
+        assert np.all(data_new[theta_key] >= partition.s2_segment.theta_range[0])
+        assert np.all(data_new[theta_key] < partition.s2_segment.theta_range[1])
+        assert np.all(data_new[phi_key] >= partition.s2_segment.phi_range[0])
+        assert np.all(data_new[phi_key] < partition.s2_segment.phi_range[1])
 
     return data_new

@@ -246,7 +246,7 @@ def visualize_s2_partition(
         # draw upper ring
         ax.axhline(theta_lo, color="black", linewidth=0.5)
     # draw final ring (only if we have rings!)
-    if n_segments:
+    if n_segments.size:
         ax.axhline(theta_hi, color="black", linewidth=0.5)
     else:
         ax.axhline(theta_c, color="black", linewidth=0.5)

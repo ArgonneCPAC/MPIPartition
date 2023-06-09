@@ -67,7 +67,7 @@ def _calculate_partition(
                 send_count_by_rank[j] += 1
 
 
-def overload(
+def s2_overload(
     partition: S2Partition,
     data: ParticleDataT,
     overload_angle: float,
@@ -144,8 +144,6 @@ def overload(
                 print(f" - send_displacements: {send_displacements}")
                 print(f" - recv_counts:        {recv_counts}")
                 print(f" - recv_displacements: {recv_displacements}")
-                for i, x in enumerate(coord_keys):
-                    print(f" - overload_{x}: {overload[i]}")
                 print("", flush=True)
             partition.comm.Barrier()
 

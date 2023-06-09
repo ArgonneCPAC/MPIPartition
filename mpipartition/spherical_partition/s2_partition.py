@@ -25,7 +25,11 @@ def _s2_partition(n, adjust_theta=True):
     # TODO: generalize to arbitrary number of dimensions
     assert n > 1
     if n == 2:
-        return np.pi / 2, np.array([], dtype=np.float64), np.array([], dtype=np.int32)
+        return (
+            np.pi / 2,
+            np.array([np.pi / 2], dtype=np.float64),
+            np.array([], dtype=np.int32),
+        )
 
     target_area = 4 * np.pi / n
 
@@ -161,7 +165,10 @@ class S2Partition:
             self.nranks, equal_area
         )
         if not equal_area:
-            self.ring_dtheta = self.ring_thetas[1] - self.ring_thetas[0]
+            if len(self.ring_thetas) > 1:
+                self.ring_dtheta = self.ring_thetas[1] - self.ring_thetas[0]
+            else:
+                self.ring_dtheta = 0.0
         else:
             self.ring_dtheta = None
 

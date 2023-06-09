@@ -27,11 +27,16 @@ def _count_neighbors(
         for j in range(nsegments):
             if j == my_rank:
                 continue
+            phi_i = phi[i]
+            if phi_i < segment_phi_low[j] - overload_angle:
+                phi_i += 2 * np.pi
+            if phi_i >= segment_phi_high[j] + overload_angle:
+                phi_i -= 2 * np.pi
             if (
                 theta[i] >= segment_theta_low[j] - overload_angle
                 and theta[i] < segment_theta_high[j] + overload_angle
-                and phi[i] >= segment_phi_low[j] - overload_angle
-                and phi[i] < segment_phi_high[j] + overload_angle
+                and phi_i >= segment_phi_low[j] - overload_angle
+                and phi_i < segment_phi_high[j] + overload_angle
             ):
                 send_counts[i] += 1
                 send_counts_by_rank[j] += 1
@@ -57,11 +62,16 @@ def _calculate_partition(
         for j in range(nsegments):
             if j == my_rank:
                 continue
+            phi_i = phi[i]
+            if phi_i < segment_phi_low[j] - overload_angle:
+                phi_i += 2 * np.pi
+            if phi_i >= segment_phi_high[j] + overload_angle:
+                phi_i -= 2 * np.pi
             if (
                 theta[i] >= segment_theta_low[j] - overload_angle
                 and theta[i] < segment_theta_high[j] + overload_angle
-                and phi[i] >= segment_phi_low[j] - overload_angle
-                and phi[i] < segment_phi_high[j] + overload_angle
+                and phi_i >= segment_phi_low[j] - overload_angle
+                and phi_i < segment_phi_high[j] + overload_angle
             ):
                 send_permutation[send_offset_by_rank[j] + send_count_by_rank[j]] = i
                 send_count_by_rank[j] += 1
@@ -71,23 +81,20 @@ def s2_overload(
     partition: S2Partition,
     data: ParticleDataT,
     overload_angle: float,
-    coord_keys: List[str],
     *,
+    theta_key: str = "theta",
+    phi_key: str = "phi",
     verbose: Union[bool, int] = False,
 ):
-    assert len(coord_keys) == 2
-    theta = coord_keys[0]
-    phi = coord_keys[1]
-
     # verify data is normalized
-    assert np.all(data[theta] >= 0)
-    assert np.all(data[theta] <= np.pi)
-    assert np.all(data[phi] >= 0)
-    assert np.all(data[phi] <= 2 * np.pi)
+    assert np.all(data[theta_key] >= 0)
+    assert np.all(data[theta_key] <= np.pi)
+    assert np.all(data[phi_key] >= 0)
+    assert np.all(data[phi_key] <= 2 * np.pi)
 
     # count for each particle to many ranks it needs to be sent
-    send_counts = np.empty_like(theta, dtype=np.int32)
-    send_count_by_rank = np.zeros(partition.nranks, send_counts)
+    send_count_by_particle = np.zeros_like(data[theta_key], dtype=np.int32)
+    send_counts = np.zeros(partition.nranks, dtype=np.int32)  # by rank
 
     segment_theta_low = np.array([s.theta_range[0] for s in partition.all_s2_segments])
     segment_theta_high = np.array([s.theta_range[1] for s in partition.all_s2_segments])
@@ -95,27 +102,27 @@ def s2_overload(
     segment_phi_high = np.array([s.phi_range[1] for s in partition.all_s2_segments])
 
     _count_neighbors(
-        theta,
-        phi,
+        data[theta_key],
+        data[phi_key],
         overload_angle,
         partition.rank,
         segment_theta_low,
         segment_theta_high,
         segment_phi_low,
         segment_phi_high,
+        send_count_by_particle,
         send_counts,
-        send_count_by_rank,
     )
-    total_send_count = np.sum(send_counts)
-    assert np.sum(send_count_by_rank) == total_send_count
-    send_displacements = np.insert(np.cumsum(send_count_by_rank)[:-1], 0, 0)
+    total_send_count = np.sum(send_count_by_particle)
+    assert np.sum(send_counts) == total_send_count
+    send_displacements = np.insert(np.cumsum(send_counts)[:-1], 0, 0)
 
     send_permutation = np.empty(total_send_count, dtype=np.int64)
     send_permutation[:] = -1
 
     _calculate_partition(
-        theta,
-        phi,
+        data[theta_key],
+        data[phi_key],
         overload_angle,
         partition.rank,
         segment_theta_low,

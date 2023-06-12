@@ -18,6 +18,43 @@ def s2_distribute(
     verify_count: bool = True,
     validate_home: bool = False,
 ) -> ParticleDataT:
+    """Distribute particles among MPI ranks according to the S2 partition.
+
+    Parameters
+    ----------
+    partition:
+        The S2 partition to use for the distribution.
+
+    data:
+        The particle data to distribute, as a collection of 1-dimensional arrays.
+        Each array must have the same length (number of particles) and the map needs
+        to contain at least the keys `theta_key` and `phi_key`.
+
+    theta_key:
+        The key in `data` that contains the particle theta coordinates (latitude),
+        in the range [0, pi].
+
+    phi_key:
+        The key in `data` that contains the particle phi coordinates (longitude),
+        in the range [0, 2*pi].
+
+    verbose:
+        If True, print summary statistics of the distribute. If > 1, print
+        statistics of each rank (i.e. how much data each rank sends to every
+        other rank).
+
+    verify_count:
+        If True, make sure that total number of objects is conserved.
+
+    validate_home:
+        If True, validate that each rank indeed owns the particles that it was sent.
+
+    Returns
+    -------
+    data: ParticleDataT
+        The distributed particle data (i.e. the data that this rank owns)
+
+    """
     # count number of particles we have
     total_to_send = len(data[theta_key])
 
@@ -118,9 +155,9 @@ def s2_distribute(
             partition.comm.Abort()
 
     if validate_home:
-        assert np.all(data_new[theta_key] >= partition.s2_segment.theta_range[0])
-        assert np.all(data_new[theta_key] < partition.s2_segment.theta_range[1])
-        assert np.all(data_new[phi_key] >= partition.s2_segment.phi_range[0])
-        assert np.all(data_new[phi_key] < partition.s2_segment.phi_range[1])
+        assert np.all(data_new[theta_key] >= partition.theta_extent[0])
+        assert np.all(data_new[theta_key] < partition.theta_extent[1])
+        assert np.all(data_new[phi_key] >= partition.phi_extent[0])
+        assert np.all(data_new[phi_key] < partition.phi_extent[1])
 
     return data_new

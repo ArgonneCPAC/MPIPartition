@@ -86,6 +86,54 @@ def s2_overload(
     phi_key: str = "phi",
     verbose: Union[bool, int] = False,
 ):
+    """Copy data within an overload angle to the neighboring ranks ("ghost" particles)
+
+    This method assumes that the particle data is already correctly distributed, i.e.
+    that all particles on a given rank are within the bounds of the rank's segment.
+
+    Parameters
+    ----------
+    partition:
+        The MPI partition defining which rank should own which subvolume of the
+        data
+
+    data:
+        The particle data to be redistributed, as a collection of 1-dimensional arrays.
+        Each array must have the same length (number of particles) and the map needs
+        to contain at least the keys `theta_key` and `phi_key`.
+
+    overload_angle:
+        The overload angle in radians. Particles within this angle of a rank's
+        segment will be copied to the neighboring ranks. Note that the angle can be
+        at maximum half of the smallest segment size in the partition.
+
+    theta_key:
+        The key in `data` that contains the particle theta coordinates (latitude),
+        in the range [0, pi].
+
+    phi_key:
+        The key in `data` that contains the particle phi coordinates (longitude),
+        in the range [0, 2*pi].
+
+    verbose:
+        If True, print summary statistics of the distribute. If > 1, print
+        statistics of each rank (i.e. how much data each rank sends to every
+        other rank).
+
+    Returns
+    -------
+    data: ParticleDataT
+        The combined data of objects within the rank's segmentt as well as the
+        objects within the overload angle of neighboring ranks.
+
+    Notes
+    -----
+
+    The function does not change the objects' coordinates or alter any data. Objects
+    that have been overloaded accross the periodic boundary at 0 and 2pi will still have
+    the original phi. In case "local" coordinates are required, this will need to be
+    done manually after calling this function.
+    """
     # verify data is normalized
     assert np.all(data[theta_key] >= 0)
     assert np.all(data[theta_key] <= np.pi)
@@ -96,10 +144,8 @@ def s2_overload(
     send_count_by_particle = np.zeros_like(data[theta_key], dtype=np.int32)
     send_counts = np.zeros(partition.nranks, dtype=np.int32)  # by rank
 
-    segment_theta_low = np.array([s.theta_range[0] for s in partition.all_s2_segments])
-    segment_theta_high = np.array([s.theta_range[1] for s in partition.all_s2_segments])
-    segment_phi_low = np.array([s.phi_range[0] for s in partition.all_s2_segments])
-    segment_phi_high = np.array([s.phi_range[1] for s in partition.all_s2_segments])
+    segment_theta_low, segment_theta_high = partition.all_theta_extents.T
+    segment_phi_low, segment_phi_high = partition.all_phi_extents.T
 
     _count_neighbors(
         data[theta_key],

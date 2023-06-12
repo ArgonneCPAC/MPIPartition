@@ -18,20 +18,20 @@ def _overloading(n, overload_angle, equal_area):
     rank = partition.rank
     nranks = partition.nranks
 
-    my_phi_range = partition.s2_segment.phi_range
-    my_theta_range = partition.s2_segment.theta_range
+    my_phi_range = partition.phi_extent
+    my_theta_range = partition.theta_extent
     np.random.seed(rank)
 
     # generate data within our partition
     data = {
         "phi": np.random.uniform(
-            partition.s2_segment.phi_range[0],
-            partition.s2_segment.phi_range[1],
+            my_phi_range[0],
+            my_phi_range[1],
             n,
         ),
         "theta": np.random.uniform(
-            partition.s2_segment.theta_range[0],
-            partition.s2_segment.theta_range[1],
+            my_theta_range[0],
+            my_theta_range[1],
             n,
         ),
     }

@@ -40,7 +40,7 @@ def _test_segmentation(theta_cap, ring_thetas, ring_segments, segment_list):
 def _partition(equal_area: bool):
     partition = S2Partition(equal_area=equal_area)
     assert partition.equal_area == equal_area
-    assert len(partition.all_s2_segments) == partition.nranks
+    assert len(partition._all_s2_segments) == partition.nranks
 
     # check ring_thetas and ring_segments
     assert np.array(partition.ring_thetas).ndim == 1
@@ -57,7 +57,7 @@ def _partition(equal_area: bool):
     assert np.isclose(partition.ring_thetas[-1], np.pi - partition.theta_cap)
 
     # check areas
-    areas = np.array([r.area for r in partition.all_s2_segments])
+    areas = np.array([r.area for r in partition._all_s2_segments])
     assert np.all(areas > 0.0)
     assert np.all(areas <= 4.0 * np.pi)
     assert np.isclose(np.sum(areas), 4.0 * np.pi)
@@ -67,7 +67,7 @@ def _partition(equal_area: bool):
         partition.theta_cap,
         partition.ring_thetas,
         partition.ring_segments,
-        partition.all_s2_segments,
+        partition._all_s2_segments,
     )
     return partition
 
@@ -75,7 +75,7 @@ def _partition(equal_area: bool):
 @pytest.mark.mpi
 def test_equal_area_s2partition():
     partition = _partition(equal_area=True)
-    areas = np.array([r.area for r in partition.all_s2_segments])
+    areas = np.array([r.area for r in partition._all_s2_segments])
     assert np.all(np.isclose(areas, areas[0]))
     assert partition.ring_dtheta is None
 

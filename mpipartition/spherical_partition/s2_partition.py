@@ -5,10 +5,6 @@ from dataclasses import dataclass
 
 from mpi4py import MPI
 
-_comm = MPI.COMM_WORLD
-_rank = _comm.Get_rank()
-_nranks = _comm.Get_size()
-
 
 def _cap_area(theta):
     h = 1 - np.cos(theta)
@@ -142,51 +138,138 @@ def _print_edge_to_area_ratio(segments: List[S2Segment], precision=3):
 
 
 class S2Partition:
+    """An MPI decomposition of the spherical shell into equal-area segments
+
+    Parameters
+    ----------
+    equal_area : bool
+        If True, the spherical shell is divided into equal-area segments. If False, use
+        equally spaced rings (in theta) instead.
+
+    comm : MPI.Comm
+        The MPI communicator to use for the decomposition (default: COMM_WORLD)
+
+    verbose : bool
+        If True, rank 0 will print information about the segmentation.
+
+    """
+
     # parition properties
-    comm: MPI.Comm
-    nranks: int
-    theta_cap: float
-    ring_thetas: npt.NDArray[np.float64]
-    ring_segments: npt.NDArray[np.int64]
-    equal_area: bool
-    ring_dtheta: Optional[float]
-    all_s2_segments: List[S2Segment]
+    _comm: MPI.Comm
+    _nranks: int
+    _theta_cap: float
+    _ring_thetas: npt.NDArray[np.float64]
+    _ring_segments: npt.NDArray[np.int64]
+    _equal_area: bool
+    _ring_dtheta: Optional[float]
+    _all_s2_segments: List[S2Segment]
 
     # rank properties
-    rank: int
-    s2_segment: S2Segment
+    _rank: int
+    _s2_segment: S2Segment
 
-    def __init__(self, equal_area: bool = True, verbose: bool = False):
-        self.comm = _comm
-        self.rank = _rank
-        self.nranks = _nranks
-        self.equal_area = equal_area
-        self.theta_cap, self.ring_thetas, self.ring_segments = _s2_partition(
-            self.nranks, equal_area
+    @property
+    def comm(self):
+        """MPI Communicator"""
+        return self._comm
+
+    @property
+    def rank(self) -> int:
+        """the MPI rank of this processor"""
+        return self._rank
+
+    @property
+    def nranks(self) -> int:
+        """the total number of processors"""
+        return self._nranks
+
+    @property
+    def equal_area(self) -> bool:
+        """whether the partition is equal-area"""
+        return self._equal_area
+
+    @property
+    def theta_cap(self) -> float:
+        """the polar cap angle"""
+        return self._theta_cap
+
+    @property
+    def ring_thetas(self) -> npt.NDArray[np.float64]:
+        """the theta boundaries of all rings"""
+        return self._ring_thetas
+
+    @property
+    def ring_segments(self) -> npt.NDArray[np.int64]:
+        """the number of segments in each ring"""
+        return self._ring_segments
+
+    @property
+    def ring_dtheta(self) -> Optional[float]:
+        """the theta spacing between rings (only for non-equal-area partitions)"""
+        return self._ring_dtheta
+
+    @property
+    def phi_extent(self) -> Tuple[float, float]:
+        """the phi extent of the segment assigned to this rank"""
+        return self._s2_segment.phi_range
+
+    @property
+    def theta_extent(self) -> Tuple[float, float]:
+        """the theta extent of the segment assigned to this rank"""
+        return self._s2_segment.theta_range
+
+    @property
+    def area(self) -> float:
+        """the area of the segment assigned to this rank"""
+        return self._s2_segment.area
+
+    @property
+    def all_phi_extents(self) -> npt.NDArray[np.float64]:
+        """the phi extent of all segments, shape (nranks, 2)"""
+        return np.array([s.phi_range for s in self._all_s2_segments])
+
+    @property
+    def all_theta_extents(self) -> npt.NDArray[np.float64]:
+        """the theta extent of all segments, shape (nranks, 2)"""
+        return np.array([s.theta_range for s in self._all_s2_segments])
+
+    def __init__(
+        self,
+        *,
+        equal_area: bool = True,
+        comm: MPI.Comm = MPI.COMM_WORLD,
+        verbose: bool = False,
+    ):
+        self._comm = comm
+        self._rank = self._comm.Get_rank()
+        self._nranks = self._comm.Get_size()
+        self._equal_area = equal_area
+        self._theta_cap, self._ring_thetas, self._ring_segments = _s2_partition(
+            self._nranks, equal_area
         )
         if not equal_area:
-            if len(self.ring_thetas) > 1:
-                self.ring_dtheta = self.ring_thetas[1] - self.ring_thetas[0]
+            if len(self._ring_thetas) > 1:
+                self._ring_dtheta = self._ring_thetas[1] - self._ring_thetas[0]
             else:
-                self.ring_dtheta = 0.0
+                self._ring_dtheta = 0.0
         else:
-            self.ring_dtheta = None
+            self._ring_dtheta = None
 
-        self.all_s2_segments = _build_s2_segment_list(
-            self.theta_cap, self.ring_thetas, self.ring_segments
+        self._all_s2_segments = _build_s2_segment_list(
+            self._theta_cap, self._ring_thetas, self._ring_segments
         )
-        assert len(self.all_s2_segments) == self.nranks
-        self.s2_segment = self.all_s2_segments[self.rank]
+        assert len(self._all_s2_segments) == self._nranks
+        self._s2_segment = self._all_s2_segments[self._rank]
 
-        if verbose and self.rank == 0:
+        if verbose and self._rank == 0:
             _print_segmentation_info(
-                self.nranks,
-                self.theta_cap,
-                self.ring_thetas,
-                self.ring_segments,
+                self._nranks,
+                self._theta_cap,
+                self._ring_thetas,
+                self._ring_segments,
             )
-            _print_area_imabalance(self.all_s2_segments)
-            _print_edge_to_area_ratio(self.all_s2_segments)
+            _print_area_imabalance(self._all_s2_segments)
+            _print_edge_to_area_ratio(self._all_s2_segments)
             print()
 
 

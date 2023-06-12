@@ -41,6 +41,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
     "sphinx.ext.autosectionlabel",
+    "sphinx_click",
 ]
 
 autosectionlabel_prefix_document = True

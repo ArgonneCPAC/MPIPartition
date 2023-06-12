@@ -20,10 +20,10 @@ def create_and_distribute(N, equal_area):
     data = s2_distribute(partition, data)
 
     valid = np.ones(len(data["phi"]), dtype=np.bool_)
-    valid &= data["phi"] >= partition.s2_segment.phi_range[0]
-    valid &= data["phi"] < partition.s2_segment.phi_range[1]
-    valid &= data["theta"] >= partition.s2_segment.theta_range[0]
-    valid &= data["theta"] < partition.s2_segment.theta_range[1]
+    valid &= data["phi"] >= partition.phi_extent[0]
+    valid &= data["phi"] < partition.phi_extent[1]
+    valid &= data["theta"] >= partition.theta_extent[0]
+    valid &= data["theta"] < partition.theta_extent[1]
 
     assert np.all(valid)
 

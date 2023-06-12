@@ -22,10 +22,11 @@ A python module for MPI volume decomposition and particle distribution
 Features
 --------
 
-* Cartesian partitioning of a cubic volume among available MPI ranks
-* distributing particle-data among ranks to the corresponding subvolume
-* overloading particle-data at rank boundaries
-* exchaning particle-data according to a "owner"-list of keys per rank
+* Cartesian partitioning of a cubic volume (arbitrary dimensions) among available MPI ranks
+* Equal area decomposition of the spherical shell among available MPI ranks
+* distributing particle-data among ranks to the corresponding subvolume / surface segment
+* overloading particle-data at rank boundaries ("ghost particles")
+
 
 
 Installation
@@ -49,10 +50,12 @@ Installing the development version from the GIT repository
 Requirements
 ------------
 
-* Python >= 3.7
+These packages will be automatically installed if they are not already present:
+
+* Python >= 3.8
 * `mpi4py <https://mpi4py.readthedocs.io/en/stable/>`_: MPI for Python
 * `numpy <https://numpy.org/>`_: Python array library
-
+* `numba <https://numba.pydata.org/>`_: Python JIT compiler
 
 Basic Usage
 -----------

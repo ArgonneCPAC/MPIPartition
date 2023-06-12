@@ -1,5 +1,5 @@
-MPI Partitioning
-================
+Cartesian Partitioning
+======================
 
 .. currentmodule:: mpipartition
 
@@ -30,8 +30,8 @@ information about the decomposition and the local rank coordinates.
 
 
 
-MPI Distribution Algorithms
-===========================
+Cartesian Distribution Algorithms
+=================================
 
 Processing large datasets on multiple MPI ranks requires to distribute the data
 among the processes. The ``mpipartition`` package contains the following

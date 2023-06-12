@@ -90,11 +90,16 @@ class Partition:
         commensurate_topo: List[int] = None,
     ):
         self._topo = None
-        assert dimensions > 0
-        assert type(dimensions) == int
+        self._neighbor_topo = None
+        self._neighbor_ranks = None
+
         self._dimensions = dimensions
         self._rank = _rank
         self._nranks = _nranks
+
+        assert dimensions > 0
+        assert type(dimensions) == int
+
         if commensurate_topo is None:
             self._decomposition = MPI.Compute_dims(_nranks, [0] * self._dimensions)
         else:
@@ -126,8 +131,6 @@ class Partition:
         ]
 
         # A graph topology linking all neighbors
-        self._neighbor_topo = None
-        self._neighbor_ranks = None
         if create_neighbor_topo:
             neighbors = np.unique(
                 [n for n in self._neighbors.flatten() if n != self._rank]

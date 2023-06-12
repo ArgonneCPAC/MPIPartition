@@ -41,6 +41,34 @@ jobs:
       - name: Install library
         run: poetry install --no-interaction
 
-      - name: Run MPI tests
+      - name: Run MPI tests 2 ranks
+        run: |
+          mpirun -n 2 poetry run pytest --with-mpi
+
+      - name: Run MPI tests 3 ranks
+        run: |
+          mpirun -n 3 poetry run pytest --with-mpi
+
+      - name: Run MPI tests 4 ranks
         run: |
           mpirun -n 4 poetry run pytest --with-mpi
+
+      - name: Run MPI tests 5 ranks
+        run: |
+          mpirun -n 5 poetry run pytest --with-mpi
+
+      - name: Run MPI tests 6 ranks
+        run: |
+          mpirun -n 6 poetry run pytest --with-mpi
+
+      - name: Run MPI tests 7 ranks
+        run: |
+          mpirun -n 7 poetry run pytest --with-mpi
+
+      - name: Run MPI tests 8 ranks
+        run: |
+          mpirun -n 8 poetry run pytest --with-mpi
+
+      - name: Run MPI tests 9 ranks
+        run: |
+          mpirun -n 9 poetry run pytest --with-mpi

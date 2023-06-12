@@ -36,7 +36,8 @@ def overload(
 
     overload_length:
         The thickness of the boundary layer that will be copied to the
-        neighboring rank
+        neighboring rank. Must be smaller than half the extent of the local
+        subvolume (along any axis)
 
     coord_keys:
         The columns in `data` that define the position of the object
@@ -62,6 +63,8 @@ def overload(
 
     """
     assert len(coord_keys) == partition.dimensions
+    for i in range(partition.dimensions):
+        assert overload_length < 0.5 * partition.extent[i]
 
     nranks = partition.nranks
     if nranks == 1:

@@ -16,7 +16,8 @@
       :caption: MPIPartition
       :maxdepth: 3
 
-      mpipartition
+      1_cartesian_partition
+      2_s2_partition
 
    .. toctree::
       :caption: Development

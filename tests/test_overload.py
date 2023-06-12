@@ -7,6 +7,9 @@ import numpy as np
 import pytest
 
 from mpipartition import Partition, overload
+from mpi4py import MPI
+
+nranks = MPI.COMM_WORLD.Get_size()
 
 
 def _overloading(dimensions, n, ol):
@@ -18,20 +21,25 @@ def _overloading(dimensions, n, ol):
         assert ol < partition.extent[i]
     rank = partition.rank
     nranks = partition.nranks
-
     np.random.seed(rank)
+
+    # generate data within our partition
     data = {
         x: np.random.uniform(0, 1, n) * partition.extent[i] + partition.origin[i]
         for i, x in enumerate(labels)
     }
+    # unique id
+    data["id"] = np.arange(n, dtype=np.uint64) + rank * n
+    # mark origin of data
+    data["s"] = rank * np.ones(n, dtype=np.uint16)
 
     # exchange global data for verification
     global_data = {}
     for k in data.keys():
         global_data[k] = np.concatenate(partition.comm.allgather(data[k]))
+        assert len(global_data[k]) == nranks * n
 
-    # mark origin of data
-    data["s"] = rank * np.ones(n, dtype=np.uint16)
+    # overload data
     data = overload(partition, 1.0, data, ol, labels)
 
     # did we give away any of our data?
@@ -62,6 +70,23 @@ def _overloading(dimensions, n, ol):
         mask_should_have &= global_data[x] >= overload_lo
         mask_should_have &= global_data[x] < overload_hi
 
+    for i in range(nranks):
+        if i == rank and not np.sum(mask_should_have) == len(data[labels[0]]):
+            print(
+                "ERROR ON RANK",
+                rank,
+                partition.origin,
+                partition.extent,
+                ol,
+            )
+            ids_should_have = global_data["id"][mask_should_have]
+            ids_have = data["id"]
+            missing_idx = ~np.isin(ids_should_have, ids_have)
+            print("MISSING IDS:", ids_should_have[missing_idx])
+            print("MISSING POS:", global_data["x"][mask_should_have][missing_idx])
+            print("MISSING_RANK:", global_data["s"][mask_should_have][missing_idx])
+            print("", flush=True)
+        partition.comm.Barrier()
     assert np.sum(mask_should_have) == len(data[labels[0]])
 
 
@@ -88,24 +113,41 @@ def _check_0overload(dimensions, n):
 
 
 @pytest.mark.mpi
-def test_1d():
+@pytest.mark.xfail
+def test_1d_large_ol():
+    partition = Partition(1)
+    ol = 0.55 * 1 / np.max(partition.decomposition)
     _check_0overload(1, 1000)
-    _overloading(1, 1000, 0.1)
+    _overloading(1, 1000, ol)
+
+
+@pytest.mark.mpi
+def test_1d():
+    partition = Partition(1)
+    ol = 0.49 * 1 / np.max(partition.decomposition)
+    _check_0overload(1, 1000)
+    _overloading(1, 1000, ol)
 
 
 @pytest.mark.mpi
 def test_2d():
+    partition = Partition(2)
+    ol = 0.49 * 1 / np.max(partition.decomposition)
     _check_0overload(2, 100)
-    _overloading(2, 100, 0.1)
+    _overloading(2, 100, ol)
 
 
 @pytest.mark.mpi
 def test_3d():
+    partition = Partition(3)
+    ol = 0.49 * 1 / np.max(partition.decomposition)
     _check_0overload(3, 10)
-    _overloading(3, 10, 0.05)
+    _overloading(3, 10, ol)
 
 
 @pytest.mark.mpi
 def test_4d():
+    partition = Partition(4)
+    ol = 0.49 * 1 / np.max(partition.decomposition)
     _check_0overload(4, 4)
-    _overloading(4, 4, 0.05)
+    _overloading(4, 4, ol)

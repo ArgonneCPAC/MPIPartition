@@ -19,21 +19,32 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = ">=3.8"
 mpi4py = "^3.1.0"
 numpy = "^1.20"
+numba = "^0.57.0"
+matplotlib = {version = "^3.7.1", optional = true}
+click = {version = "^8.1.3", optional = true}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 black = "^22.1.0"
 flake8 = "^4.0.1"
 wheel = "^0.37.1"
 Sphinx = "^4.3.2"
 sphinx-rtd-theme = "^1.0.0"
 sphinxcontrib-napoleon = "^0.7"
+sphinx-click = "^4.4.0"
 bump2version = "^1.0.1"
 numpydoc = "^1.2.1"
 pytest = "^7.1.1"
 pytest-mpi = "^0.6"
+ipykernel = "^6.23.1"
+
+[tool.poetry.extras]
+viz = ["matplotlib", "click"]
+
+[tool.poetry.scripts]
+mpipartition-s2 = "mpipartition.scripts.s2_prediction:cli"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

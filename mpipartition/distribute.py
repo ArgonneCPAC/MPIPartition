@@ -49,8 +49,7 @@ def distribute(
     Returns
     -------
     data: ParticleDataT
-        The distributed treenode / coretree data (i.e. the data that this rank
-        owns)
+        The distributed particle data (i.e. the data that this rank owns)
 
     """
     assert len(coord_keys) == partition.dimensions

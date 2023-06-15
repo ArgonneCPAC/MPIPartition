@@ -35,10 +35,83 @@ between neighbors.
     if partition.rank == 0:
         print(partition.extent)
 
+Example Partitions
+------------------
+
 You can use the ``mpipartition-s2`` executable to obtain the decomposition
-information for a given number of ranks (and visualize the decomposition).
+information for a given number of ranks (and visualize the decomposition). Here
+are some examples for 5, 10 and 100 ranks.
 
+5 MPI ranks
+^^^^^^^^^^^
 
+.. figure:: figures/s2_partition_5ranks.svg
+   :width: 600
+   :align: center
+   :alt: S2 partitioning with 5 ranks
+
+   Segmentation of S2 with 5 MPI ranks.
+
+.. code-block::
+
+   Segmentation statistics for 5 ranks:
+   polar cap angle: 0.927295
+   number of rings: 1
+      ring   0:   3 segments between theta=[0.927295, 2.214297]]
+   Segment area imbalance:
+      max/min: 1.000000
+      max/avg: 1.000000
+   Total edge/area ratio: 2.214498
+
+10 MPI ranks
+^^^^^^^^^^^^
+
+.. figure:: figures/s2_partition_10ranks.svg
+   :width: 600
+   :align: center
+   :alt: S2 partitioning with 10 ranks
+
+   Segmentation of S2 with 10 MPI ranks.
+
+.. code-block::
+
+   Segmentation statistics for 10 ranks:
+   polar cap angle: 0.643501
+   number of rings: 2
+      ring   0:   4 segments between theta=[0.643501, 1.570796]]
+      ring   1:   4 segments between theta=[1.570796, 2.498092]]
+   Segment area imbalance:
+      max/min: 1.000000
+      max/avg: 1.000000
+   Total edge/area ratio: 3.380669
+
+100 MPI ranks
+^^^^^^^^^^^^^
+
+.. figure:: figures/s2_partition_100ranks.svg
+   :width: 600
+   :align: center
+   :alt: S2 partitioning with 100 ranks
+
+   Segmentation of S2 with 100 MPI ranks.
+
+.. code-block::
+
+   Segmentation statistics for 100 ranks:
+   polar cap angle: 0.200335
+   number of rings: 8
+      ring   0:   6 segments between theta=[0.200335, 0.535527]]
+      ring   1:  11 segments between theta=[0.535527, 0.876298]]
+      ring   2:  15 segments between theta=[0.876298, 1.223879]]
+      ring   3:  17 segments between theta=[1.223879, 1.570796]]
+      ring   4:  17 segments between theta=[1.570796, 1.917713]]
+      ring   5:  15 segments between theta=[1.917713, 2.265295]]
+      ring   6:  11 segments between theta=[2.265295, 2.606066]]
+      ring   7:   6 segments between theta=[2.606066, 2.941258]]
+   Segment area imbalance:
+      max/min: 1.000000
+      max/avg: 1.000000
+   Total edge/area ratio: 11.206372
 
 S2 Distribution Algorithms
 ==========================
@@ -53,8 +126,8 @@ functions for data on the sphere:
    s2_distribute
    s2_overload
 
-Examples
---------
+Distribution/Overload Examples
+------------------------------
 
 In the following example, we generate 100 randomly positioned points per rank
 and then distribute them according to the angular coordinates.

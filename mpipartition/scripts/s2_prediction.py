@@ -45,12 +45,20 @@ from mpipartition.spherical_partition.s2_partition import (
         "plot for visualization."
     ),
 )
+@click.option(
+    "--figure-pad",
+    type=float,
+    help=(
+        "pad_inches argument used for saving the figure. Set to 0 to remove whitespace."
+    ),
+)
 def cli(
     nranks: int,
     equal_area: bool,
     precision: int,
     figure: Optional[str],
     use_mollweide: bool,
+    figure_pad: float,
 ):
     theta_cap, ring_thetas, ring_segments = _s2_partition(nranks, equal_area)
     all_s2_segments = _build_s2_segment_list(theta_cap, ring_thetas, ring_segments)
@@ -77,4 +85,4 @@ def cli(
         fig, ax = visualize_s2_partition(nranks, equal_area, use_mollweide)
         if use_mollweide:
             ax.set(xticklabels=[], yticklabels=[])
-        fig.savefig(figure)
+        fig.savefig(figure, bbox_inches="tight", pad_inches=figure_pad)

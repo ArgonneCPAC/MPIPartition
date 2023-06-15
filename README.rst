@@ -22,8 +22,8 @@ A python module for MPI volume decomposition and particle distribution
 Features
 --------
 
-* Cartesian partitioning of a cubic volume (arbitrary dimensions) among available MPI ranks
-* Equal area decomposition of the spherical shell among available MPI ranks
+* Cartesian partitioning of a cubic volume (arbitrary dimensions) among MPI ranks
+* Equal area decomposition of the spherical shell (S2) among MPI ranks
 * distributing particle-data among ranks to the corresponding subvolume / surface segment
 * overloading particle-data at rank boundaries ("ghost particles")
 

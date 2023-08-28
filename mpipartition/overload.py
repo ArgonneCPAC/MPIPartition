@@ -64,7 +64,7 @@ def overload(
     """
     assert len(coord_keys) == partition.dimensions
     for i in range(partition.dimensions):
-        assert overload_length < 0.5 * partition.extent[i] * box_size
+        assert overload_length < partition.extent[i] * box_size
 
     nranks = partition.nranks
     if nranks == 1:

@@ -116,7 +116,9 @@ def _check_0overload(dimensions, n):
 @pytest.mark.xfail
 def test_1d_large_ol():
     partition = Partition(1)
-    ol = 0.55 * 1 / np.max(partition.decomposition)
+    if np.min(partition.decomposition) == 1:
+        pytest.xfail("invalid number of MPI ranks for overload")
+    ol = 1 / np.max(partition.decomposition)
     _check_0overload(1, 1000)
     _overloading(1, 1000, ol)
 
@@ -124,6 +126,8 @@ def test_1d_large_ol():
 @pytest.mark.mpi
 def test_1d():
     partition = Partition(1)
+    if np.min(partition.decomposition) == 1:
+        pytest.xfail("invalid number of MPI ranks for overload")
     ol = 0.49 * 1 / np.max(partition.decomposition)
     _check_0overload(1, 1000)
     _overloading(1, 1000, ol)
@@ -132,6 +136,8 @@ def test_1d():
 @pytest.mark.mpi
 def test_2d():
     partition = Partition(2)
+    if np.min(partition.decomposition) == 1:
+        pytest.xfail("invalid number of MPI ranks for overload")
     ol = 0.49 * 1 / np.max(partition.decomposition)
     _check_0overload(2, 100)
     _overloading(2, 100, ol)
@@ -140,6 +146,8 @@ def test_2d():
 @pytest.mark.mpi
 def test_3d():
     partition = Partition(3)
+    if np.min(partition.decomposition) == 1:
+        pytest.xfail("invalid number of MPI ranks for overload")
     ol = 0.49 * 1 / np.max(partition.decomposition)
     _check_0overload(3, 10)
     _overloading(3, 10, ol)
@@ -148,6 +156,8 @@ def test_3d():
 @pytest.mark.mpi
 def test_4d():
     partition = Partition(4)
+    if np.min(partition.decomposition) == 1:
+        pytest.xfail("invalid number of MPI ranks for overload")
     ol = 0.49 * 1 / np.max(partition.decomposition)
     _check_0overload(4, 4)
     _overloading(4, 4, ol)

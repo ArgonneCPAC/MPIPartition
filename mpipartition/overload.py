@@ -64,7 +64,12 @@ def overload(
     """
     assert len(coord_keys) == partition.dimensions
     for i in range(partition.dimensions):
-        assert overload_length < partition.extent[i] * box_size
+        max_overload = partition.extent[i] * box_size
+        if partition.decomposition[i] == 2:
+            # can maximally overload have the local extent, otherwise would need
+            # to send same particle multiple times
+            max_overload *= 0.5
+        assert overload_length < max_overload
 
     nranks = partition.nranks
     if nranks == 1:

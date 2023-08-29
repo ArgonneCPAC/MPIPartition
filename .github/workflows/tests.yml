@@ -72,3 +72,7 @@ jobs:
       - name: Run MPI tests 9 ranks
         run: |
           mpirun -n 9 poetry run pytest --with-mpi
+
+      - name: Run MPI tests 16 ranks
+        run: |
+          mpirun -n 16 poetry run pytest --with-mpi

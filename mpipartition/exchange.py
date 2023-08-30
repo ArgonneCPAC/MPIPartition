@@ -35,6 +35,13 @@ def exchange(
     Returns
     -------
     """
+
+    if not do_all2all and partition.comm_neighbor is None:
+        raise RuntimeError(
+            "Cannot exchange data between neighbors if no neighbor topology was "
+            "created. Either create partition with ``create_neighbor_topo=True`` "
+            "or set ``do_all2all=True``"
+        )
     comm = partition.comm
     rank = partition.rank
     nranks = partition.nranks
@@ -156,7 +163,7 @@ def exchange(
 
     # prepare data to send
     orphan_requests_indices = []
-    orphan_requests_mask = np.zeros(localcount, dtype=np.bool)
+    orphan_requests_mask = np.zeros(localcount, dtype=np.bool_)
     for i in range(exchange_nranks):
         req = orphan_requests_recv[
             orphan_requests_recv_offsets[i] : orphan_requests_recv_offsets[i]

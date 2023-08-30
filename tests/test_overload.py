@@ -17,8 +17,6 @@ def _overloading(dimensions, n, ol):
     labels = "xyzuvw"[:dimensions]
 
     partition = Partition(dimensions)
-    for i in range(dimensions):
-        assert ol < partition.extent[i] * 0.5
     rank = partition.rank
     nranks = partition.nranks
     np.random.seed(rank)
@@ -97,7 +95,6 @@ def _check_0overload(dimensions, n):
     partition = Partition(dimensions)
 
     rank = partition.rank
-    nranks = partition.nranks
 
     np.random.seed(rank)
     data = {
@@ -113,12 +110,11 @@ def _check_0overload(dimensions, n):
 
 
 @pytest.mark.mpi
-@pytest.mark.xfail
 def test_1d_large_ol():
     partition = Partition(1)
     if np.min(partition.decomposition) == 1:
         pytest.xfail("invalid number of MPI ranks for overload")
-    ol = 1 / np.max(partition.decomposition)
+    ol = 0.75 * 1 / np.max(partition.decomposition)
     _check_0overload(1, 1000)
     _overloading(1, 1000, ol)
 

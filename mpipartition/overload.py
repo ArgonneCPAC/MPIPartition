@@ -65,10 +65,9 @@ def overload(
     assert len(coord_keys) == partition.dimensions
     for i in range(partition.dimensions):
         assert partition.decomposition[i] > 1  # currently can't overload if only 1 rank
-        # the particle exchange operation can only send each particle to the left
-        # or the right in each dimension so you cannot exhange more than half the
-        # regions extent
-        assert overload_length < 0.5 * partition.extent[i] * box_size
+        # we only overload particles in one layer of the domain decomposition
+        # so we cannot overload to more than the extent of each partition
+        assert overload_length < partition.extent[i] * box_size
 
     nranks = partition.nranks
     if nranks == 1:
@@ -83,12 +82,15 @@ def overload(
     neighbors = partition.neighbors
 
     # Find all overload regions each particle should be in
-    overload = {}
+    overload_left = {}
+    overload_right = {}
     for i, x in enumerate(coord_keys):
         _i = np.zeros_like(data[x], dtype=np.int8)
         _i[data[x] < origin[i] + overload_length] = -1
+        overload_left[i] = _i
+        _i = np.zeros_like(data[x], dtype=np.int8)
         _i[data[x] > origin[i] + extent[i] - overload_length] = 1
-        overload[i] = _i
+        overload_right[i] = _i
 
     # Get particle indices of each of the 27 neighbors overload
     exchange_indices = [np.empty(0, dtype=np.int64) for i in range(nranks)]
@@ -104,11 +106,11 @@ def overload(
     next(corners)
 
     for corner in corners:
-        mask = np.ones_like(overload[0], dtype=np.bool_)
+        mask = np.ones_like(overload_left[0], dtype=np.bool_)
         for d in range(partition.dimensions):
             if corner[d] == 0:
                 continue
-            mask &= overload[d] == corner[d]
+            mask &= (overload_left[d] == corner[d]) | (overload_right[d] == corner[d])
         add_exchange_indices(mask, corner)
 
     # Check how many elements will be sent
@@ -135,9 +137,10 @@ def overload(
                 print(f" - recv_counts:        {recv_counts}")
                 print(f" - recv_displacements: {recv_displacements}")
                 for i, x in enumerate(coord_keys):
-                    print(f" - overload_{x}: {overload[i]}")
+                    print(f" - overload_left_{x}: {overload_left[i]}")
+                    print(f" - overload_right_{x}: {overload_right[i]}")
                 print(f" - send_idx: {send_idx}")
-                print(f"", flush=True)
+                print("", flush=True)
             comm.Barrier()
 
     # send data all-to-all, each array individually

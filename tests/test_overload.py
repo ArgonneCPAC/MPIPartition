@@ -18,7 +18,7 @@ def _overloading(dimensions, n, ol):
 
     partition = Partition(dimensions)
     for i in range(dimensions):
-        assert ol < partition.extent[i]
+        assert ol < partition.extent[i] * 0.5
     rank = partition.rank
     nranks = partition.nranks
     np.random.seed(rank)

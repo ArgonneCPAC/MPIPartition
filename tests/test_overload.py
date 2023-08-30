@@ -118,7 +118,7 @@ def test_1d_large_ol():
     partition = Partition(1)
     if np.min(partition.decomposition) == 1:
         pytest.xfail("invalid number of MPI ranks for overload")
-    ol = 1 / np.max(partition.decomposition)
+    ol = 0.9 / np.max(partition.decomposition)
     _check_0overload(1, 1000)
     _overloading(1, 1000, ol)
 

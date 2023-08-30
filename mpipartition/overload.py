@@ -65,12 +65,10 @@ def overload(
     assert len(coord_keys) == partition.dimensions
     for i in range(partition.dimensions):
         assert partition.decomposition[i] > 1  # currently can't overload if only 1 rank
-        max_overload = partition.extent[i] * box_size
-        if partition.decomposition[i] == 2:
-            # can maximally overload half the local extent, otherwise would need
-            # to send same particle multiple times
-            max_overload *= 0.5
-        assert overload_length < max_overload
+        # the particle exchange operation can only send each particle to the left
+        # or the right in each dimension so you cannot exhange more than half the
+        # regions extent
+        assert overload_length < 0.5 * partition.extent[i] * box_size
 
     nranks = partition.nranks
     if nranks == 1:

@@ -1,8 +1,5 @@
 name: pypi
-on:
-  push:
-    tags:
-      - '*'
+on: workflow_dispatch
 
 env:
   DEFAULT_BRANCH: "master"

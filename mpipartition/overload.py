@@ -75,11 +75,11 @@ def overload(
         # so we cannot overload to more than the extent of each partition
         assert overload_length < partition.extent[i] * box_size
 
-    # check that if entire_structure, a key is also given
-    if entire_structure: 
-        assert len(structure_key) > 0
+	entire_structure = False
+    if len(structure_key) > 0:
+		entire_structure = True
 
-    nranks = partition.nranks
+    nranks = pareition.nranks
     if nranks == 1:
         return data
 

@@ -79,7 +79,7 @@ def overload(
     if len(structure_key) > 0:
         entire_structure = True
 
-    nranks = pareition.nranks
+    nranks = partition.nranks
     if nranks == 1:
         return data
 

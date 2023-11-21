@@ -14,7 +14,7 @@ def overload(
     data: ParticleDataT,
     overload_length: float,
     coord_keys: List[str],
-	structure_key: str = "",
+	structure_key: str = None,
     *,
     verbose: Union[bool, int] = False,
 ):
@@ -76,7 +76,7 @@ def overload(
         assert overload_length < partition.extent[i] * box_size
 
     entire_structure = False
-    if len(structure_key) > 0:
+    if structure_key is not None:
         entire_structure = True
 
     nranks = partition.nranks
@@ -100,9 +100,12 @@ def overload(
 
         if entire_structure:
             # find all structures present in objects to be overloaded left
-            all_structs = np.unique(data[structure_key][np.abs(_i)])
+            all_structs = np.unique(data[structure_key][_i==-1])
+            print("O_AS:",len(all_structs), flush=True)
             # add objects with these structure flags to the mask
             all_structs_mask = np.isin(data[structure_key], all_structs)
+            # also add the hosts
+            all_structs_mask[np.isin(data["halo_id"], all_structs)] = True
             _i[all_structs_mask] = -1
 
         overload_left[i] = _i
@@ -113,9 +116,11 @@ def overload(
 
         if entire_structure:
             # find all structures present in objects to be overloaded right
-            all_structs = np.unique(data[structure_key][_i])
+            all_structs = np.unique(data[structure_key][_i==1])
             # add objects with these structure flags to the mask
             all_structs_mask = np.isin(data[structure_key], all_structs)
+            # also add the hosts
+            all_structs_mask[np.isin(data["halo_id"], all_structs)] = True
             _i[all_structs_mask] = 1
 
         overload_right[i] = _i

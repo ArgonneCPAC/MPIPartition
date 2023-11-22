@@ -141,7 +141,7 @@ def _overloading_struct(dimensions, n, ol):
     data = overload(partition, 1.0, data, ol, labels, structure_key="struct")
 
     # did we give away any of our data?
-    #assert np.sum(data["s"] == rank) == n
+    assert np.sum(data["s"] == rank) == n
 
     # check that if we have any obj of a "st", that we have every obj of that "st"
     present_structs = np.unique(data["struct"])

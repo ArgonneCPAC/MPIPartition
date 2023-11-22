@@ -45,8 +45,10 @@ def overload(
 
     structure_key:
         The columns in `data` that define which objects are associated with 
-        which structure. If any value other than "" is passed for this parameter,
-		the data will be overloaded to include entire structures.
+        which structure. If any value is passed for this parameter,	the data 
+        will be overloaded to include entire structures; ie when one object in
+        a structure is overloaded, all other objects in that structure are sent
+        as well.
 
     verbose:
         If True, print summary statistics of the distribute. If > 1, print
@@ -101,11 +103,9 @@ def overload(
         if entire_structure:
             # find all structures present in objects to be overloaded left
             all_structs = np.unique(data[structure_key][_i==-1])
-            print("O_AS:",len(all_structs), flush=True)
+            all_structs = np.setdiff1d(all_structs, -1)
             # add objects with these structure flags to the mask
             all_structs_mask = np.isin(data[structure_key], all_structs)
-            # also add the hosts
-            all_structs_mask[np.isin(data["halo_id"], all_structs)] = True
             _i[all_structs_mask] = -1
 
         overload_left[i] = _i
@@ -117,10 +117,9 @@ def overload(
         if entire_structure:
             # find all structures present in objects to be overloaded right
             all_structs = np.unique(data[structure_key][_i==1])
+            all_structs = np.unique(all_structs, -1)
             # add objects with these structure flags to the mask
             all_structs_mask = np.isin(data[structure_key], all_structs)
-            # also add the hosts
-            all_structs_mask[np.isin(data["halo_id"], all_structs)] = True
             _i[all_structs_mask] = 1
 
         overload_right[i] = _i

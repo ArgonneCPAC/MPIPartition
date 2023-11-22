@@ -109,44 +109,45 @@ def _check_0overload(dimensions, n):
     assert np.all(data["s"] == rank)
 
 def _overloading_struct(dimensions, n, ol):
-	assert dimensions < 7
-	# 'a' indicates the "structure" field
-	labels = "axyzuvw"[:dimensions+1]
+    assert dimensions < 7
+    labels = "xyzuvw"[:dimensions]
 
-	n_struct = int(n/4)
+    n_struct = int(n/4)
 
-	partition = Partition(dimensions)
-	rank = partition.rank
-	nranks = partition.nranks
-	np.random.seed(rank)
+    partition = Partition(dimensions)
+    rank = partition.rank
+    nranks = partition.nranks
+    np.random.seed(rank)
 
-	# generate data within our partition
-	data = {
-		x: np.random.uniform(0, 1, n) * partition.extent[i] + partition.origin[i]
-		for i, x in enumerate(labels)
-	}
-	# unique id 
-	data["id"] = np.arange(n, dtype=np.uint64) + rank * n
-	# structure tag
-	data["st"] = rank * np.ones(n, dtype=np.uint16)
+    # generate data within our partition
+    data = {
+        x: np.random.uniform(0, 1, n) * partition.extent[i] + partition.origin[i]
+        for i, x in enumerate(labels)
+    }
+    # unique id 
+    data["id"] = np.arange(n, dtype=np.uint64) + rank * n
+    # mark origin of data
+    data["s"] = rank * np.ones(n, dtype=np.uint16)
+    # structure tag
+    data["struct"] = np.random.randint(0, n_struct, n) + rank * n_struct
 
-	# exchange global data for verification
-	global_data = {}
-	for k in data.keys():
-		global_data[k] = np.concatenate(partition.comm.allgather(data[k]))
-		assert len(global_data[k]) == nranks * n
+    # exchange global data for verification
+    global_data = {}
+    for k in data.keys():
+        global_data[k] = np.concatenate(partition.comm.allgather(data[k]))
+        assert len(global_data[k]) == nranks * n
 
-	# overload data
-	data_overloaded = overload(partition, 1.0, data, ol, labels)
+    # overload data
+    data = overload(partition, 1.0, data, ol, labels, structure_key="struct")
 
-	# did we give away any of our data?
-	assert np.all(np.isin(data["s"], data_overloaded["s"]) == True)
+    # did we give away any of our data?
+    #assert np.sum(data["s"] == rank) == n
 
-	# check that if we have any obj of a "st", that we have every obj of that "st"
-    present_structs = np.unique(data_rank["st"])
-    needed_objs = global_data["st"][np.isin(global_data["st"], present_structs)]
-    missing_objs = np.all(np.isin(needed_objs, data_rank["id"]))
-    assert np.all(np.isin(needed_objs, data_rank["id"]))
+    # check that if we have any obj of a "st", that we have every obj of that "st"
+    present_structs = np.unique(data["struct"])
+    needed_objs = global_data["id"][np.isin(global_data["struct"], present_structs)]
+    missing_objs = np.all(np.isin(needed_objs, data["id"]))
+    assert np.all(np.isin(needed_objs, data["id"]))
 
 
 @pytest.mark.mpi

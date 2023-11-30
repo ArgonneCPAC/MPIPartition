@@ -77,10 +77,6 @@ def overload(
         # so we cannot overload to more than the extent of each partition
         assert overload_length < partition.extent[i] * box_size
 
-    entire_structure = False
-    if structure_key is not None:
-        entire_structure = True
-
     nranks = partition.nranks
     if nranks == 1:
         return data
@@ -114,7 +110,7 @@ def overload(
         _i = np.zeros_like(data[x], dtype=np.int8)
         _i[data[x] > origin[i] + extent[i] - overload_length] = 1
 
-        if entire_structure:
+        if structure_key is not None:
             # find all structures present in objects to be overloaded right
             all_structs = np.unique(data[structure_key][_i == 1])
             all_structs = np.unique(all_structs, -1)

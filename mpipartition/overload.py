@@ -96,7 +96,7 @@ def overload(
         _i = np.zeros_like(data[x], dtype=np.int8)
         _i[data[x] < origin[i] + overload_length] = -1
 
-        if entire_structure:
+        if structure_key is not None:
             # find all structures present in objects to be overloaded left
             all_structs = np.unique(data[structure_key][_i == -1])
             all_structs = np.setdiff1d(all_structs, -1)

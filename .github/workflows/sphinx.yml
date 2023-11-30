@@ -1,5 +1,5 @@
 name: sphinx
-on: workflow_dispatch
+on: [push, pull_request]
 
 env:
   DEFAULT_BRANCH: "master"

@@ -190,7 +190,7 @@ def test_3d():
     ol = 0.49 * 1 / np.max(partition.decomposition)
     _check_0overload(3, 10)
     _overloading(3, 10, ol)
-    _overloading(3, 10, ol)
+    _overloading_struct(3, 10, ol)
 
 
 @pytest.mark.mpi
@@ -201,4 +201,4 @@ def test_4d():
     ol = 0.49 * 1 / np.max(partition.decomposition)
     _check_0overload(4, 4)
     _overloading(4, 4, ol)
-    _overloading(4, 4, ol)
+    _overloading_struct(4, 4, ol)

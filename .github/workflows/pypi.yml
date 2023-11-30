@@ -1,8 +1,8 @@
 name: pypi
 on:
-    push:
-        tags:
-            *
+  push:
+    tags:
+      - '*'
 
 env:
   DEFAULT_BRANCH: "master"

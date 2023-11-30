@@ -44,7 +44,7 @@ def overload(
         The columns in `data` that define the position of the object
 
     structure_key:
-        The columns in `data` that define which objects are associated with 
+        The column in `data` that defines which objects are associated with 
         which structure. If any value is passed for this parameter,	the data 
         will be overloaded to include entire structures; ie when one object in
         a structure is overloaded, all other objects in that structure are sent
@@ -102,7 +102,7 @@ def overload(
 
         if entire_structure:
             # find all structures present in objects to be overloaded left
-            all_structs = np.unique(data[structure_key][_i==-1])
+            all_structs = np.unique(data[structure_key][_i == -1])
             all_structs = np.setdiff1d(all_structs, -1)
             # add objects with these structure flags to the mask
             all_structs_mask = np.isin(data[structure_key], all_structs)
@@ -116,7 +116,7 @@ def overload(
 
         if entire_structure:
             # find all structures present in objects to be overloaded right
-            all_structs = np.unique(data[structure_key][_i==1])
+            all_structs = np.unique(data[structure_key][_i == 1])
             all_structs = np.unique(all_structs, -1)
             # add objects with these structure flags to the mask
             all_structs_mask = np.isin(data[structure_key], all_structs)

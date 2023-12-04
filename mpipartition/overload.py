@@ -14,6 +14,7 @@ def overload(
     data: ParticleDataT,
     overload_length: float,
     coord_keys: List[str],
+	structure_key: str = None,
     *,
     verbose: Union[bool, int] = False,
 ):
@@ -41,6 +42,13 @@ def overload(
 
     coord_keys:
         The columns in `data` that define the position of the object
+
+    structure_key:
+        The column in `data` that defines which objects are associated with 
+        which structure. If any value is passed for this parameter,	the data 
+        will be overloaded to include entire structures; ie when one object in
+        a structure is overloaded, all other objects in that structure are sent
+        as well.
 
     verbose:
         If True, print summary statistics of the distribute. If > 1, print
@@ -87,9 +95,29 @@ def overload(
     for i, x in enumerate(coord_keys):
         _i = np.zeros_like(data[x], dtype=np.int8)
         _i[data[x] < origin[i] + overload_length] = -1
+
+        if structure_key is not None:
+            # find all structures present in objects to be overloaded left
+            all_structs = np.unique(data[structure_key][_i == -1])
+            all_structs = np.setdiff1d(all_structs, -1)
+            # add objects with these structure flags to the mask
+            all_structs_mask = np.isin(data[structure_key], all_structs)
+            _i[all_structs_mask] = -1
+
         overload_left[i] = _i
+
+
         _i = np.zeros_like(data[x], dtype=np.int8)
         _i[data[x] > origin[i] + extent[i] - overload_length] = 1
+
+        if structure_key is not None:
+            # find all structures present in objects to be overloaded right
+            all_structs = np.unique(data[structure_key][_i == 1])
+            all_structs = np.unique(all_structs, -1)
+            # add objects with these structure flags to the mask
+            all_structs_mask = np.isin(data[structure_key], all_structs)
+            _i[all_structs_mask] = 1
+
         overload_right[i] = _i
 
     # Get particle indices of each of the 27 neighbors overload

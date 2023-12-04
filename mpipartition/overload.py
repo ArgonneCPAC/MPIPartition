@@ -14,8 +14,8 @@ def overload(
     data: ParticleDataT,
     overload_length: float,
     coord_keys: List[str],
-	structure_key: str = None,
     *,
+    structure_key: str = None,
     verbose: Union[bool, int] = False,
 ):
     """Copy data within an overload length to the neighboring ranks
@@ -44,11 +44,12 @@ def overload(
         The columns in `data` that define the position of the object
 
     structure_key:
-        The column in `data` that defines which objects are associated with 
-        which structure. If any value is passed for this parameter,	the data 
-        will be overloaded to include entire structures; ie when one object in
-        a structure is overloaded, all other objects in that structure are sent
-        as well.
+        The column in `data` containing a structure ("group") tag. If provided,
+        the data will be overloaded to include entire structures; ie when one
+        object in a structure is overloaded, all other objects in that structure
+        are sent as well. The column `data[structure_key]` should be of integer
+        type, and any objects not belonging to a structure are assumed to have
+        tag -1.
 
     verbose:
         If True, print summary statistics of the distribute. If > 1, print
@@ -105,7 +106,6 @@ def overload(
             _i[all_structs_mask] = -1
 
         overload_left[i] = _i
-
 
         _i = np.zeros_like(data[x], dtype=np.int8)
         _i[data[x] > origin[i] + extent[i] - overload_length] = 1

@@ -7,11 +7,14 @@ import sys
 from typing import List
 
 import numpy as np
+import mpi4py
+mpi4py.rc.initialize = False
 from mpi4py import MPI
+#from mpi4py import MPI
 
-_comm = MPI.COMM_WORLD
-_rank = _comm.Get_rank()
-_nranks = _comm.Get_size()
+#_comm = MPI.COMM_WORLD
+#_rank = _comm.Get_rank()
+#_nranks = _comm.Get_size()
 
 
 def _factorize(n):
@@ -84,6 +87,7 @@ class Partition:
 
     def __init__(
         self,
+        comm, 
         dimensions=3,
         *,
         create_neighbor_topo: bool = False,
@@ -94,14 +98,15 @@ class Partition:
         self._neighbor_ranks = None
 
         self._dimensions = dimensions
-        self._rank = _rank
-        self._nranks = _nranks
+        self._comm = comm
+        self._rank = comm.Get_rank()
+        self._nranks = comm.Get_size()
 
         assert dimensions > 0
         assert type(dimensions) == int
 
         if commensurate_topo is None:
-            self._decomposition = MPI.Compute_dims(_nranks, [0] * self._dimensions)
+            self._decomposition = MPI.Compute_dims(self._nranks, [0] * self._dimensions)
         else:
             nranks_factors = _factorize(self._nranks)
             decomposition, remainder = _distribute_factors(
@@ -113,7 +118,7 @@ class Partition:
 
         periodic = [True] * self._dimensions
 
-        self._topo = _comm.Create_cart(self._decomposition, periods=periodic)
+        self._topo = self._comm.Create_cart(self._decomposition, periods=periodic)
         self._coords = list(self._topo.coords)
 
         self._neighbors = np.zeros([3] * self._dimensions, dtype=np.int32)

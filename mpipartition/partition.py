@@ -10,11 +10,6 @@ import numpy as np
 import mpi4py
 mpi4py.rc.initialize = False
 from mpi4py import MPI
-#from mpi4py import MPI
-
-#_comm = MPI.COMM_WORLD
-#_rank = _comm.Get_rank()
-#_nranks = _comm.Get_size()
 
 
 def _factorize(n):
@@ -87,7 +82,7 @@ class Partition:
 
     def __init__(
         self,
-        comm, 
+        comm=None, 
         dimensions=3,
         *,
         create_neighbor_topo: bool = False,
@@ -98,9 +93,16 @@ class Partition:
         self._neighbor_ranks = None
 
         self._dimensions = dimensions
-        self._comm = comm
-        self._rank = comm.Get_rank()
-        self._nranks = comm.Get_size()
+
+        if comm is not None:
+            self._comm = comm
+            self._mpi_init = False
+        else:
+            MPI.Init()
+            self._mpi_init = True
+            self._comm = MPI.COMM_WORLD
+        self._rank = self._comm.Get_rank()
+        self._nranks = self._comm.Get_size()
 
         assert dimensions > 0
         assert type(dimensions) == int
@@ -161,6 +163,8 @@ class Partition:
             self._neighbor_topo.Free()
         if self._topo is not None:
             self._topo.Free()
+        if self._mpi_init:
+            MPI.Finalize()
 
     @property
     def dimensions(self):

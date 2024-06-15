@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mpipartition.overload &mdash; MPIPartition 1.0.4 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex/" />
+    <link rel="search" title="Search" href="../../../search/" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../" class="icon icon-home">
+            MPIPartition
+          </a>
+              <div class="version">
+                1.0.4
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search/" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../">MPIPartition Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">MPIPartition</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../mpipartition/">MPI Partitioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mpipartition/#mpi-distribution-algorithms">MPI Distribution Algorithms</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing/">Contributing</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../">MPIPartition</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../">Module code</a></li>
+      <li class="breadcrumb-item active">mpipartition.overload</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for mpipartition.overload</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">.partition</span> <span class="kn">import</span> <span class="n">Partition</span>
+
+<span class="n">ParticleDataT</span> <span class="o">=</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="overload"><a class="viewcode-back" href="../../../mpipartition/#mpipartition.overload">[docs]</a><span class="k">def</span> <span class="nf">overload</span><span class="p">(</span>
+    <span class="n">partition</span><span class="p">:</span> <span class="n">Partition</span><span class="p">,</span>
+    <span class="n">box_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">ParticleDataT</span><span class="p">,</span>
+    <span class="n">overload_length</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">coord_keys</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Copy data within an overload length to the neighboring ranks</span>
+
+<span class="sd">    This method assumes that the volume cube is periodic and will wrap the data</span>
+<span class="sd">    around the boundary interfaces.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    partition:</span>
+<span class="sd">        The MPI partition defining which rank should own which subvolume of the</span>
+<span class="sd">        data</span>
+
+<span class="sd">    box_size:</span>
+<span class="sd">        the size of the full volume cube</span>
+
+<span class="sd">    data:</span>
+<span class="sd">        The treenode / coretree data that should be distributed</span>
+
+<span class="sd">    overload_length:</span>
+<span class="sd">        The thickness of the boundary layer that will be copied to the</span>
+<span class="sd">        neighboring rank. Must be smaller than half the extent of the local</span>
+<span class="sd">        subvolume (along any axis)</span>
+
+<span class="sd">    coord_keys:</span>
+<span class="sd">        The columns in `data` that define the position of the object</span>
+
+<span class="sd">    verbose:</span>
+<span class="sd">        If True, print summary statistics of the distribute. If &gt; 1, print</span>
+<span class="sd">        statistics of each rank (i.e. how much data each rank sends to every</span>
+<span class="sd">        other rank).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    data: TreeDataT</span>
+<span class="sd">        The combined data of objects within the rank&#39;s subvolume as well as the</span>
+<span class="sd">        objects within the overload region of neighboring ranks</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+
+<span class="sd">    The function does not change the objects&#39; coordinates or alter any data.</span>
+<span class="sd">    Objects that have been overloaded accross the periodic boundaries will still</span>
+<span class="sd">    have the original positions. In case &quot;local&quot; coordinates are required, this</span>
+<span class="sd">    will need to be done manually after calling this function.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">coord_keys</span><span class="p">)</span> <span class="o">==</span> <span class="n">partition</span><span class="o">.</span><span class="n">dimensions</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">partition</span><span class="o">.</span><span class="n">dimensions</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">overload_length</span> <span class="o">&lt;</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">partition</span><span class="o">.</span><span class="n">extent</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="n">nranks</span> <span class="o">=</span> <span class="n">partition</span><span class="o">.</span><span class="n">nranks</span>
+    <span class="k">if</span> <span class="n">nranks</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="n">rank</span> <span class="o">=</span> <span class="n">partition</span><span class="o">.</span><span class="n">rank</span>
+    <span class="n">comm</span> <span class="o">=</span> <span class="n">partition</span><span class="o">.</span><span class="n">comm</span>
+    <span class="n">dimensions</span> <span class="o">=</span> <span class="n">partition</span><span class="o">.</span><span class="n">dimensions</span>
+    <span class="n">origin</span> <span class="o">=</span> <span class="n">box_size</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">partition</span><span class="o">.</span><span class="n">origin</span><span class="p">)</span>
+    <span class="n">extent</span> <span class="o">=</span> <span class="n">box_size</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">partition</span><span class="o">.</span><span class="n">extent</span><span class="p">)</span>
+
+    <span class="n">neighbors</span> <span class="o">=</span> <span class="n">partition</span><span class="o">.</span><span class="n">neighbors</span>
+
+    <span class="c1"># Find all overload regions each particle should be in</span>
+    <span class="n">overload</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">coord_keys</span><span class="p">):</span>
+        <span class="n">_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">)</span>
+        <span class="n">_i</span><span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">origin</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">overload_length</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">_i</span><span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">origin</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">extent</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">overload_length</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">overload</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">_i</span>
+
+    <span class="c1"># Get particle indices of each of the 27 neighbors overload</span>
+    <span class="n">exchange_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nranks</span><span class="p">)]</span>
+
+    <span class="k">def</span> <span class="nf">add_exchange_indices</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="o">==</span> <span class="n">dimensions</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">neighbors</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">_i</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">_i</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">!=</span> <span class="n">rank</span><span class="p">:</span>
+            <span class="n">exchange_indices</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">union1d</span><span class="p">(</span><span class="n">exchange_indices</span><span class="p">[</span><span class="n">n</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">mask</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">corners</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">repeat</span><span class="o">=</span><span class="n">partition</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)</span>
+    <span class="c1"># skip first: will be [0,0,0]</span>
+    <span class="nb">next</span><span class="p">(</span><span class="n">corners</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">corner</span> <span class="ow">in</span> <span class="n">corners</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">overload</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">partition</span><span class="o">.</span><span class="n">dimensions</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">corner</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">mask</span> <span class="o">&amp;=</span> <span class="n">overload</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">==</span> <span class="n">corner</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
+        <span class="n">add_exchange_indices</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">corner</span><span class="p">)</span>
+
+    <span class="c1"># Check how many elements will be sent</span>
+    <span class="n">send_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">exchange_indices</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="n">send_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">exchange_indices</span><span class="p">)</span>
+    <span class="n">send_displacements</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">send_counts</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">total_to_send</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">send_counts</span><span class="p">)</span>
+
+    <span class="c1"># Check how many elements will be received</span>
+    <span class="n">recv_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">send_counts</span><span class="p">)</span>
+    <span class="n">comm</span><span class="o">.</span><span class="n">Alltoall</span><span class="p">(</span><span class="n">send_counts</span><span class="p">,</span> <span class="n">recv_counts</span><span class="p">)</span>
+    <span class="n">recv_displacements</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">recv_counts</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">total_to_receive</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">recv_counts</span><span class="p">)</span>
+
+    <span class="c1"># debug message</span>
+    <span class="k">if</span> <span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nranks</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">rank</span> <span class="o">==</span> <span class="n">i</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Overload Debug Rank </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - rank sends    </span><span class="si">{</span><span class="n">total_to_send</span><span class="si">:</span><span class="s2">10d</span><span class="si">}</span><span class="s2"> particles&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - rank receives </span><span class="si">{</span><span class="n">total_to_receive</span><span class="si">:</span><span class="s2">10d</span><span class="si">}</span><span class="s2"> particles&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - send_counts:        </span><span class="si">{</span><span class="n">send_counts</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - send_displacements: </span><span class="si">{</span><span class="n">send_displacements</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - recv_counts:        </span><span class="si">{</span><span class="n">recv_counts</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - recv_displacements: </span><span class="si">{</span><span class="n">recv_displacements</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">coord_keys</span><span class="p">):</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - overload_</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">overload</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; - send_idx: </span><span class="si">{</span><span class="n">send_idx</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">comm</span><span class="o">.</span><span class="n">Barrier</span><span class="p">()</span>
+
+    <span class="c1"># send data all-to-all, each array individually</span>
+    <span class="n">data_new</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="c1"># prepare send-array</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">send_idx</span><span class="p">]</span>
+        <span class="c1"># prepare recv-array</span>
+        <span class="n">dr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">total_to_receive</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="c1"># exchange data</span>
+        <span class="n">s_msg</span> <span class="o">=</span> <span class="p">[</span><span class="n">ds</span><span class="p">,</span> <span class="p">(</span><span class="n">send_counts</span><span class="p">,</span> <span class="n">send_displacements</span><span class="p">),</span> <span class="n">ds</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">char</span><span class="p">]</span>
+        <span class="n">r_msg</span> <span class="o">=</span> <span class="p">[</span><span class="n">dr</span><span class="p">,</span> <span class="p">(</span><span class="n">recv_counts</span><span class="p">,</span> <span class="n">recv_displacements</span><span class="p">),</span> <span class="n">ds</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">char</span><span class="p">]</span>
+        <span class="n">comm</span><span class="o">.</span><span class="n">Alltoallv</span><span class="p">(</span><span class="n">s_msg</span><span class="p">,</span> <span class="n">r_msg</span><span class="p">)</span>
+        <span class="c1"># add received data to original data</span>
+        <span class="n">data_new</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">dr</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">data_new</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Michael Buehlmann.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

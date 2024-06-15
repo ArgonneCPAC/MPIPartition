@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MPI Partitioning &mdash; MPIPartition 1.0.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex/" />
+    <link rel="search" title="Search" href="../search/" />
+    <link rel="next" title="Contributing" href="../contributing/" />
+    <link rel="prev" title="MPIPartition Documentation" href="../" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../" class="icon icon-home">
+            MPIPartition
+          </a>
+              <div class="version">
+                1.0.4
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search/" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../">MPIPartition Documentation</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">MPIPartition</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">MPI Partitioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#mpi-distribution-algorithms">MPI Distribution Algorithms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#references">References</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#partition">Partition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#distribute">distribute</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#overload">overload</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#exchange">exchange</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../contributing/">Contributing</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../">MPIPartition</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">MPI Partitioning</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/mpipartition.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="mpi-partitioning">
+<h1>MPI Partitioning<a class="headerlink" href="#mpi-partitioning" title="Permalink to this headline"></a></h1>
+<p>The <a class="reference internal" href="#mpipartition.Partition" title="mpipartition.Partition"><code class="xref py py-class docutils literal notranslate"><span class="pre">Partition</span></code></a> class will create a volume decomposition using the
+number of available MPI ranks. After initialization, the instance contains
+information about the decomposition and the local rank coordinates.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mpipartition</span> <span class="kn">import</span> <span class="n">Partition</span>
+
+<span class="c1"># partitioning a box among the available ranks</span>
+<span class="n">partition</span> <span class="o">=</span> <span class="n">Partition</span><span class="p">()</span>
+
+<span class="c1"># print how the volume has been partitioned (from rank 0):</span>
+<span class="k">if</span> <span class="n">partition</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">partition</span><span class="o">.</span><span class="n">decomposition</span><span class="p">)</span>
+
+<span class="c1"># print coordinate of all ranks:</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">partition</span><span class="o">.</span><span class="n">rank</span><span class="p">,</span> <span class="n">partition</span><span class="o">.</span><span class="n">coordinates</span><span class="p">)</span>
+
+<span class="c1"># print size of this rank (as fraction of unit-cube).</span>
+<span class="c1"># Note: the extent of each rank will be the same</span>
+<span class="k">if</span> <span class="n">partition</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">partition</span><span class="o">.</span><span class="n">extent</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="mpi-distribution-algorithms">
+<h1>MPI Distribution Algorithms<a class="headerlink" href="#mpi-distribution-algorithms" title="Permalink to this headline"></a></h1>
+<p>Processing large datasets on multiple MPI ranks requires to distribute the data
+among the processes. The <code class="docutils literal notranslate"><span class="pre">mpipartition</span></code> package contains the following
+functions that abstract this task in different use-cases:</p>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#mpipartition.distribute" title="mpipartition.distribute"><code class="xref py py-obj docutils literal notranslate"><span class="pre">distribute</span></code></a></p></td>
+<td><p>Distribute data among MPI ranks according to data position and volume partition</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#mpipartition.overload" title="mpipartition.overload"><code class="xref py py-obj docutils literal notranslate"><span class="pre">overload</span></code></a></p></td>
+<td><p>Copy data within an overload length to the neighboring ranks</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#mpipartition.exchange" title="mpipartition.exchange"><code class="xref py py-obj docutils literal notranslate"><span class="pre">exchange</span></code></a></p></td>
+<td><p>Distribute data among neighboring ranks and all2all by a key</p></td>
+</tr>
+</tbody>
+</table>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline"></a></h2>
+<p>In the following example, we generate 100 randomly positioned points per rank
+and then distribute them according to the positions</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mpipartition</span> <span class="kn">import</span> <span class="n">Partition</span>
+<span class="kn">from</span> <span class="nn">mpipartition</span> <span class="kn">import</span> <span class="n">distribute</span><span class="p">,</span> <span class="n">overload</span><span class="p">,</span> <span class="n">exchange</span>
+
+<span class="c1"># assuming a cube size of 1.</span>
+<span class="n">box_size</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+<span class="c1"># partitioning a box with the available MPI ranks</span>
+<span class="c1"># if no argument is specified, the dimension of the volume is 3</span>
+<span class="n">partition</span> <span class="o">=</span> <span class="n">Partition</span><span class="p">()</span>
+
+<span class="c1"># number of random particles per rank</span>
+<span class="n">n_local</span> <span class="o">=</span> <span class="mi">100</span>
+
+<span class="c1"># randomly distributed particles in the unit cube</span>
+<span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_local</span><span class="p">),</span>
+    <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_local</span><span class="p">),</span>
+    <span class="s2">&quot;z&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_local</span><span class="p">),</span>
+    <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">n_local</span> <span class="o">*</span> <span class="n">partition</span><span class="o">.</span><span class="n">rank</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_local</span><span class="p">),</span>
+    <span class="s2">&quot;rank&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_local</span><span class="p">)</span> <span class="o">*</span> <span class="n">partition</span><span class="o">.</span><span class="n">rank</span>
+<span class="p">}</span>
+
+<span class="c1"># assign to rank by position</span>
+<span class="n">data_distributed</span> <span class="o">=</span> <span class="n">distribute</span><span class="p">(</span><span class="n">partition</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">))</span>
+
+<span class="c1"># make sure we still have all particles</span>
+<span class="n">n_local_distributed</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_distributed</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">])</span>
+<span class="n">n_global_distributed</span> <span class="o">=</span> <span class="n">partition</span><span class="o">.</span><span class="n">comm</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">n_local_distributed</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">partition</span><span class="o">.</span><span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="n">n_global_distributed</span> <span class="o">==</span> <span class="n">n_local</span> <span class="o">*</span> <span class="n">partition</span><span class="o">.</span><span class="n">nranks</span>
+
+<span class="c1"># validate that each particle is in local extent</span>
+<span class="n">bbox</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+   <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">partition</span><span class="o">.</span><span class="n">origin</span><span class="p">),</span>
+   <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">partition</span><span class="o">.</span><span class="n">origin</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">partition</span><span class="o">.</span><span class="n">extent</span><span class="p">)</span>
+<span class="p">])</span><span class="o">.</span><span class="n">T</span>
+<span class="n">is_valid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_local_after</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="s1">&#39;xyz&#39;</span><span class="p">]):</span>
+    <span class="n">is_valid</span> <span class="o">&amp;=</span> <span class="n">data_distributed</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">bbox</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">is_valid</span> <span class="o">&amp;=</span> <span class="n">data_distributed</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">bbox</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">is_valid</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now, we overload the partitions by 0.1</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">data_overloaded</span> <span class="o">=</span> <span class="n">overload</span><span class="p">(</span><span class="n">partition</span><span class="p">,</span> <span class="n">box_size</span><span class="p">,</span> <span class="n">data_distributed</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Sometimes, the destination of a particle is given by a key, not by the position
+(e.g. for a merger-tree, we want the progenitors to be on the same rank as the
+descendant, even if they cross the rank boundaries). We can then use the
+<code class="docutils literal notranslate"><span class="pre">exchange</span></code> function as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># create a list of particle ids that we want to have on the local rank</span>
+<span class="n">my_keys</span> <span class="o">=</span> <span class="n">n_local</span> <span class="o">*</span> <span class="n">partition</span><span class="o">.</span><span class="n">rank</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_local</span><span class="p">)</span>
+
+<span class="c1"># since in our example, particles can be further away than 1 neighboring</span>
+<span class="c1"># rank, we directly do an all2all exchange:</span>
+<span class="n">data_exchanged</span> <span class="o">=</span> <span class="n">exchange</span><span class="p">(</span><span class="n">partition</span><span class="p">,</span> <span class="n">data_distributed</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">my_keys</span><span class="p">,</span> <span class="n">do_all2all</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># we should have the same particles as we started with! Let&#39;s check</span>
+<span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">data_exchanged</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">data_exchanged</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="n">data_exchanged</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_exchanged</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">s</span><span class="p">]</span>
+
+<span class="n">n_local_exchanged</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_exchanged</span><span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">])</span>
+<span class="k">assert</span> <span class="n">n_local_exchanged</span> <span class="o">==</span> <span class="n">n_local</span>
+<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">==</span> <span class="n">data_exchanged</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Permalink to this headline"></a></h2>
+<section id="partition">
+<h3>Partition<a class="headerlink" href="#partition" title="Permalink to this headline"></a></h3>
+<dl class="py class">
+<dt class="sig sig-object py" id="mpipartition.Partition">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mpipartition.</span></span><span class="sig-name descname"><span class="pre">Partition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dimensions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create_neighbor_topo</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">commensurate_topo</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mpipartition/partition/#Partition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mpipartition.Partition" title="Permalink to this definition"></a></dt>
+<dd><p>An MPI partition of a cubic volume</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dimension</strong> (<em>int</em>) – Numer of dimensions of the volume cube. Default: 3</p></li>
+<li><p><strong>create_neighbor_topo</strong> (<em>boolean</em>) – If <cite>True</cite>, an additional graph communicator will be initialized
+connecting all direct neighbors (3**dimension - 1) symmetrically</p></li>
+<li><p><strong>commensurate_topo</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – A proportional target topology for decomposition. When specified, a partition
+will be created so that <cite>commensurate_topo[i] % partition.decomposition[i] == 0</cite>
+for all <cite>i</cite>. The code will raise a RuntimeError if such a decomposition is not
+possible.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition-examples admonition">
+<p class="admonition-title">Examples</p>
+<p>Using Partition on 8 MPI ranks to split a periodic unit-cube</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">partition</span> <span class="o">=</span> <span class="n">Partition</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">partition</span><span class="o">.</span><span class="n">rank</span>
+<span class="go">0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">partition</span><span class="o">.</span><span class="n">decomposition</span>
+<span class="go">np.ndarray([2, 2, 2])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">partition</span><span class="o">.</span><span class="n">coordinates</span>
+<span class="go">np.ndarray([0, 0, 0])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">partition</span><span class="o">.</span><span class="n">origin</span>
+<span class="go">np.ndarray([0., 0., 0.])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">partition</span><span class="o">.</span><span class="n">extent</span>
+<span class="go">np.ndarray([0.5, 0.5, 0.5])</span>
+</pre></div>
+</div>
+</div>
+<dl class="py property">
+<dt class="sig sig-object py" id="mpipartition.Partition.comm">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">comm</span></span><a class="headerlink" href="#mpipartition.Partition.comm" title="Permalink to this definition"></a></dt>
+<dd><p>3D Cartesian MPI Topology / Communicator</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mpipartition.Partition.comm_neighbor">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">comm_neighbor</span></span><a class="headerlink" href="#mpipartition.Partition.comm_neighbor" title="Permalink to this definition"></a></dt>
+<dd><p>Graph MPI Topology / Communicator, connecting the neighboring ranks
+(symmetric)</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mpipartition.Partition.coordinates">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">coordinates</span></span><a class="headerlink" href="#mpipartition.Partition.coordinates" title="Permalink to this definition"></a></dt>
+<dd><p>3D indices of this processor</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mpipartition.Partition.decomposition">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">decomposition</span></span><a class="headerlink" href="#mpipartition.Partition.decomposition" title="Permalink to this definition"></a></dt>
+<dd><p>number of ranks along each dimension</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+<dt class="field-even">Type</dt>
+<dd class="field-even"><p>the decomposition of the cubic volume</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mpipartition.Partition.dimensions">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dimensions</span></span><a class="headerlink" href="#mpipartition.Partition.dimensions" title="Permalink to this definition"></a></dt>
+<dd><p>Dimension of the partitioned volume</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mpipartition.Partition.extent">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">extent</span></span><a class="headerlink" href="#mpipartition.Partition.extent" title="Permalink to this definition"></a></dt>
+<dd><p>Length along each axis of this processors subvolume (same for all procs)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="mpipartition.Partition.get_neighbor">
+<span class="sig-name descname"><span class="pre">get_neighbor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">di</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mpipartition/partition/#Partition.get_neighbor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mpipartition.Partition.get_neighbor" title="Permalink to this definition"></a></dt>
+<dd><p>get the rank of the neighbor at relative position (dx, dy, dz, …)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>di</strong> (<em>List</em><em>[</em><em>int</em><em>]</em>) – list of relative coordinates, one of <cite>[-1, 0, 1]</cite>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mpipartition.Partition.neighbor_ranks">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">neighbor_ranks</span></span><a class="headerlink" href="#mpipartition.Partition.neighbor_ranks" title="Permalink to this definition"></a></dt>
+<dd><p>a flattened list of the unique neighboring ranks</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mpipartition.Partition.neighbors">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">neighbors</span></span><a class="headerlink" href="#mpipartition.Partition.neighbors" title="Permalink to this definition"></a></dt>
+<dd><p>a 3^d dimensional array with the ranks of the neighboring processes
+(<cite>neighbors[1,1,1, …]</cite> is this processor)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mpipartition.Partition.nranks">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nranks</span></span><a class="headerlink" href="#mpipartition.Partition.nranks" title="Permalink to this definition"></a></dt>
+<dd><p>the total number of processors</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mpipartition.Partition.origin">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">origin</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">numpy.ndarray</span></em><a class="headerlink" href="#mpipartition.Partition.origin" title="Permalink to this definition"></a></dt>
+<dd><p>Cartesian coordinates of the origin of this processor</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mpipartition.Partition.rank">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rank</span></span><a class="headerlink" href="#mpipartition.Partition.rank" title="Permalink to this definition"></a></dt>
+<dd><p>the MPI rank of this processor</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="mpipartition.Partition.ranklist">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ranklist</span></span><a class="headerlink" href="#mpipartition.Partition.ranklist" title="Permalink to this definition"></a></dt>
+<dd><p>A complete list of ranks, aranged by their coordinates.
+The array has shape <cite>partition.decomposition</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="distribute">
+<h3>distribute<a class="headerlink" href="#distribute" title="Permalink to this headline"></a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="mpipartition.distribute">
+<span class="sig-prename descclassname"><span class="pre">mpipartition.</span></span><span class="sig-name descname"><span class="pre">distribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">partition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coord_keys</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verify_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mpipartition/distribute/#distribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mpipartition.distribute" title="Permalink to this definition"></a></dt>
+<dd><p>Distribute data among MPI ranks according to data position and volume partition</p>
+<p>The position of each TreeData element is given by the data columns
+specified with <cite>coord_keys</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>partition</strong> (<a class="reference internal" href="#mpipartition.Partition" title="mpipartition.partition.Partition"><em>mpipartition.partition.Partition</em></a>) – The MPI partition defining which rank should own which subvolume of the
+data</p></li>
+<li><p><strong>box_size</strong> (<em>float</em>) – The size of the full simulation volume</p></li>
+<li><p><strong>data</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>numpy.ndarray</em><em>]</em>) – The treenode / coretree data that should be distributed</p></li>
+<li><p><strong>coord_keys</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – The columns in <cite>data</cite> that define the position of the object</p></li>
+<li><p><strong>verbose</strong> (<em>Union</em><em>[</em><em>bool</em><em>, </em><em>int</em><em>]</em>) – If True, print summary statistics of the distribute. If &gt; 1, print
+statistics of each rank (i.e. how much data each rank sends to every
+other rank).</p></li>
+<li><p><strong>verify_count</strong> (<em>bool</em>) – If True, make sure that total number of objects is conserved</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>data</strong> – The distributed treenode / coretree data (i.e. the data that this rank
+owns)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>ParticleDataT</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="overload">
+<h3>overload<a class="headerlink" href="#overload" title="Permalink to this headline"></a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="mpipartition.overload">
+<span class="sig-prename descclassname"><span class="pre">mpipartition.</span></span><span class="sig-name descname"><span class="pre">overload</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">partition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">box_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overload_length</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coord_keys</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mpipartition/overload/#overload"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mpipartition.overload" title="Permalink to this definition"></a></dt>
+<dd><p>Copy data within an overload length to the neighboring ranks</p>
+<p>This method assumes that the volume cube is periodic and will wrap the data
+around the boundary interfaces.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>partition</strong> (<a class="reference internal" href="#mpipartition.Partition" title="mpipartition.partition.Partition"><em>mpipartition.partition.Partition</em></a>) – The MPI partition defining which rank should own which subvolume of the
+data</p></li>
+<li><p><strong>box_size</strong> (<em>float</em>) – the size of the full volume cube</p></li>
+<li><p><strong>data</strong> (<em>Mapping</em><em>[</em><em>str</em><em>, </em><em>numpy.ndarray</em><em>]</em>) – The treenode / coretree data that should be distributed</p></li>
+<li><p><strong>overload_length</strong> (<em>float</em>) – The thickness of the boundary layer that will be copied to the
+neighboring rank. Must be smaller than half the extent of the local
+subvolume (along any axis)</p></li>
+<li><p><strong>coord_keys</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – The columns in <cite>data</cite> that define the position of the object</p></li>
+<li><p><strong>verbose</strong> (<em>Union</em><em>[</em><em>bool</em><em>, </em><em>int</em><em>]</em>) – If True, print summary statistics of the distribute. If &gt; 1, print
+statistics of each rank (i.e. how much data each rank sends to every
+other rank).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>data</strong> – The combined data of objects within the rank’s subvolume as well as the
+objects within the overload region of neighboring ranks</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>TreeDataT</p>
+</dd>
+</dl>
+<div class="admonition-notes admonition">
+<p class="admonition-title">Notes</p>
+<p>The function does not change the objects’ coordinates or alter any data.
+Objects that have been overloaded accross the periodic boundaries will still
+have the original positions. In case “local” coordinates are required, this
+will need to be done manually after calling this function.</p>
+</div>
+</dd></dl>
+
+</section>
+<section id="exchange">
+<h3>exchange<a class="headerlink" href="#exchange" title="Permalink to this headline"></a></h3>
+<dl class="py function">
+<dt class="sig sig-object py" id="mpipartition.exchange">
+<span class="sig-prename descclassname"><span class="pre">mpipartition.</span></span><span class="sig-name descname"><span class="pre">exchange</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">partition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">local_keys</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_all2all</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replace_notfound_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/mpipartition/exchange/#exchange"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mpipartition.exchange" title="Permalink to this definition"></a></dt>
+<dd><p>Distribute data among neighboring ranks and all2all by a key</p>
+<p>This function will assign data to the rank that owns the key. The keys that the
+local rank owns are given by <code class="docutils literal notranslate"><span class="pre">local_keys</span></code>, which should be unique. The keys of the
+data that the local rank currently has is in <code class="docutils literal notranslate"><span class="pre">data[key]</span></code>. Certain values can be
+ignored by setting filter_key to that value or by setting filter_key to a
+(vectorized) function that returns <code class="docutils literal notranslate"><span class="pre">True</span></code> for keys that should be redistributed
+and <code class="docutils literal notranslate"><span class="pre">False</span></code> for keys that should be ignored.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>partition</strong> (<a class="reference internal" href="#mpipartition.Partition" title="mpipartition.partition.Partition"><em>mpipartition.partition.Partition</em></a>) – </p></li>
+<li><p><strong>data</strong> (<em>dict</em>) – </p></li>
+<li><p><strong>key</strong> (<em>str</em>) – </p></li>
+<li><p><strong>local_keys</strong> (<em>numpy.ndarray</em>) – </p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>filter_key</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>int</em><em>, </em><em>Callable</em><em>[</em><em>[</em><em>numpy.ndarray</em><em>]</em><em>, </em><em>numpy.ndarray</em><em>]</em><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>do_all2all</strong> (<em>bool</em>) – </p></li>
+<li><p><strong>replace_notfound_key</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Michael Buehlmann.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

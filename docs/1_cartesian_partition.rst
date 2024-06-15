@@ -88,8 +88,8 @@ and then distribute them according to the positions
       np.array(partition.origin),
       np.array(partition.origin) + np.array(partition.extent)
    ]).T
-   is_valid = np.ones(n_local_after, dtype=np.bool_)
-   for i, x in enumerate(['xyz']):
+   is_valid = np.ones(n_local_distributed, dtype=np.bool_)
+   for i, x in enumerate('xyz'):
        is_valid &= data_distributed[x] >= bbox[i, 0]
        is_valid &= data_distributed[x] < bbox[i, 1]
    assert np.all(is_valid)

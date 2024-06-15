@@ -9,6 +9,8 @@ import pytest
 from mpipartition import Partition, overload
 from mpi4py import MPI
 
+if not MPI.Is_initialized():
+    MPI.Init()
 nranks = MPI.COMM_WORLD.Get_size()
 
 
@@ -108,11 +110,12 @@ def _check_0overload(dimensions, n):
     assert len(data_ol[labels[0]] == n)
     assert np.all(data["s"] == rank)
 
+
 def _overloading_struct(dimensions, n, ol):
     assert dimensions < 7
     labels = "xyzuvw"[:dimensions]
 
-    n_struct = int(n/4)
+    n_struct = int(n / 4)
 
     partition = Partition(dimensions)
     rank = partition.rank
@@ -124,7 +127,7 @@ def _overloading_struct(dimensions, n, ol):
         x: np.random.uniform(0, 1, n) * partition.extent[i] + partition.origin[i]
         for i, x in enumerate(labels)
     }
-    # unique id 
+    # unique id
     data["id"] = np.arange(n, dtype=np.uint64) + rank * n
     # mark origin of data
     data["s"] = rank * np.ones(n, dtype=np.uint16)

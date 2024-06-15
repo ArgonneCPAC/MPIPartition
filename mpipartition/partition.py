@@ -7,8 +7,6 @@ import sys
 from typing import List
 
 import numpy as np
-import mpi4py
-mpi4py.rc.initialize = False
 from mpi4py import MPI
 
 
@@ -82,9 +80,9 @@ class Partition:
 
     def __init__(
         self,
-        comm=None, 
         dimensions=3,
         *,
+        comm=None,
         create_neighbor_topo: bool = False,
         commensurate_topo: List[int] = None,
     ):
@@ -93,19 +91,19 @@ class Partition:
         self._neighbor_ranks = None
 
         self._dimensions = dimensions
-
+        self._mpi_init = False
         if comm is not None:
             self._comm = comm
-            self._mpi_init = False
         else:
-            MPI.Init()
-            self._mpi_init = True
+            if not MPI.Is_initialized():
+                MPI.Init()
+                self._mpi_init = True
             self._comm = MPI.COMM_WORLD
         self._rank = self._comm.Get_rank()
         self._nranks = self._comm.Get_size()
 
         assert dimensions > 0
-        assert type(dimensions) == int
+        assert isinstance(dimensions, int)
 
         if commensurate_topo is None:
             self._decomposition = MPI.Compute_dims(self._nranks, [0] * self._dimensions)

@@ -237,9 +237,15 @@ class S2Partition:
         self,
         *,
         equal_area: bool = True,
-        comm: MPI.Comm = MPI.COMM_WORLD,
+        comm: MPI.Comm = None,
         verbose: bool = False,
     ):
+        self._mpi_init = False
+        if comm is None:
+            if not MPI.Is_initialized():
+                MPI.Init()
+                self._mpi_init = True
+            comm = MPI.COMM_WORLD
         self._comm = comm
         self._rank = self._comm.Get_rank()
         self._nranks = self._comm.Get_size()
@@ -271,6 +277,10 @@ class S2Partition:
             _print_area_imabalance(self._all_s2_segments)
             _print_edge_to_area_ratio(self._all_s2_segments)
             print()
+
+    def __del__(self):
+        if self._mpi_init:
+            MPI.Finalize()
 
 
 def visualize_s2_partition(

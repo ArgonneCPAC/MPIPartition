@@ -60,7 +60,7 @@ def s2_distribute(
 
     # verify data is normalized
     assert np.all(data[theta_key] >= 0)
-    assert np.all(data[theta_key] < np.pi)
+    assert np.all(data[theta_key] <= np.pi)
     assert np.all(data[phi_key] >= 0)
     assert np.all(data[phi_key] < 2 * np.pi)
 
@@ -76,6 +76,7 @@ def s2_distribute(
                 (data[theta_key] - partition.theta_cap) // partition.ring_dtheta
             ).astype(np.int32) + 1
             ring_idx = np.clip(ring_idx, 0, len(partition.ring_segments) + 1)
+            ring_idx[data[theta_key] == np.pi] -= 1  # handle cases where theta == pi
 
     phi_idx = np.zeros_like(ring_idx, dtype=np.int32)
     mask_is_on_ring = (ring_idx > 0) & (ring_idx <= len(partition.ring_segments))
@@ -156,7 +157,11 @@ def s2_distribute(
 
     if validate_home:
         assert np.all(data_new[theta_key] >= partition.theta_extent[0])
-        assert np.all(data_new[theta_key] < partition.theta_extent[1])
+        if partition.theta_extent[1] < np.pi:
+            assert np.all(data_new[theta_key] < partition.theta_extent[1])
+        else:
+            # bottom cap, we allow theta == pi
+            assert np.all(data_new[theta_key] <= partition.theta_extent[1])
         assert np.all(data_new[phi_key] >= partition.phi_extent[0])
         assert np.all(data_new[phi_key] < partition.phi_extent[1])
 

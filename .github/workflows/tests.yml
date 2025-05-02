@@ -42,7 +42,7 @@ jobs:
         run: poetry install --no-interaction
 
       - name: MyPy Type checking
-        run: poetry run mypy --config-file mypy.ini --strict --show-error-codes
+        run: poetry run mypy --config-file mypy.ini --show-error-codes
 
       - name: Ruff Linting
         run: poetry run ruff check

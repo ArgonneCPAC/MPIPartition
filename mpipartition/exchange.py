@@ -111,7 +111,7 @@ def exchange(
                 print(f"Debug Desc Exchange (nonlocal), rank {i}")
                 print(f" - send {local_orphan_count}")
                 print(f" - recv {orphan_counts}")
-                print(f"", flush=True)
+                print("", flush=True)
             comm.Barrier()
 
     # check if we have any of them
@@ -156,7 +156,7 @@ def exchange(
                 print(f" - will request {np.sum(orphan_islocal)} in total")
                 print(f" - send req {orphan_requests_send_counts}")
                 print(f" - recv req {orphan_requests_recv_counts}")
-                print(f"", flush=True)
+                print("", flush=True)
             comm.Barrier()
 
     # verify that we don't aks ourselves for particles
@@ -202,7 +202,7 @@ def exchange(
                 print(f"Debug Desc Exchange (to exchange), rank {i}")
                 print(f" - send {orphan_requests_send_counts}")
                 print(f" - recv {orphan_requests_recv_counts}")
-                print(f"", flush=True)
+                print("", flush=True)
             comm.Barrier()
 
     data_new = {}

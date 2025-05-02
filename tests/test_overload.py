@@ -16,7 +16,6 @@ nranks = MPI.COMM_WORLD.Get_size()
 def _overloading(dimensions: int, n: int, ol: float) -> None:
     assert dimensions < 7
     labels = "xyzuvw"[:dimensions]
-    coord_keys = [x for x in labels]
 
     partition = Partition(dimensions)
     rank = partition.rank
@@ -151,7 +150,7 @@ def _overloading_struct(dimensions: int, n: int, ol: float) -> None:
     # check that if we have any obj of a "st", that we have every obj of that "st"
     present_structs = np.unique(data["struct"])
     needed_objs = global_data["id"][np.isin(global_data["struct"], present_structs)]
-    missing_objs = np.all(np.isin(needed_objs, data["id"]))
+    # missing_objs = np.all(np.isin(needed_objs, data["id"]))
     assert np.all(np.isin(needed_objs, data["id"]))
 
 

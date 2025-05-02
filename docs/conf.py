@@ -17,7 +17,8 @@
 # relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 #
-import os, sys
+import os
+import sys
 import re
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -25,7 +26,7 @@ from typing import TYPE_CHECKING
 DIR = Path(__file__).parent.resolve()
 sys.path.insert(0, os.path.abspath(".."))
 
-import mpipartition
+import mpipartition  # noqa: E402
 
 # -- General configuration ---------------------------------------------
 

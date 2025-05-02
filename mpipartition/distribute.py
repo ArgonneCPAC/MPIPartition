@@ -65,7 +65,7 @@ def distribute(
     if nranks == 1:
         return data
 
-    rank = partition.rank
+    # rank = partition.rank
     comm = partition.comm
     dimensions = partition.dimensions
     ranklist = np.array(partition.ranklist)

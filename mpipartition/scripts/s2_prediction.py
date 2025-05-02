@@ -72,9 +72,9 @@ def cli(
     _print_edge_to_area_ratio(all_s2_segments, precision=precision)
 
     if figure is not None:
-        try:
-            import matplotlib.pyplot as plt
-        except ImportError:
+        import importlib.util
+
+        if importlib.util.find_spec("matplotlib") is None:
             print(
                 "matplotlib is required for visualization, install mpipartition with "
                 "`pip install mpipartition[viz]",

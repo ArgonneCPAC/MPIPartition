@@ -86,7 +86,7 @@ def _distribute_dataset_by_home(
                 print(f" - send_displacements: {send_displacements}")
                 print(f" - recv_counts:        {recv_counts}")
                 print(f" - recv_displacements: {recv_displacements}")
-                print(f"", flush=True)
+                print("", flush=True)
             partition.comm.Barrier()
 
     # send data all-to-all, each array individually

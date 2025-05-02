@@ -59,8 +59,6 @@ def s2_distribute(
         The distributed particle data (i.e. the data that this rank owns)
 
     """
-    # count number of particles we have
-    total_to_send = len(data[theta_key])
 
     # verify data is normalized
     assert np.all(data[theta_key] >= 0)

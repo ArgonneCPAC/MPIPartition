@@ -1,11 +1,11 @@
 import sys
-from typing import Callable, Mapping, Union
+from typing import Callable, Union, TYPE_CHECKING
 
 import numpy as np
 
 from .partition import Partition
 
-ParticleDataT = Mapping[str, np.ndarray]
+ParticleDataT = dict[str, np.ndarray]
 
 
 def exchange(
@@ -15,10 +15,10 @@ def exchange(
     local_keys: np.ndarray,
     *,
     verbose: bool = False,
-    filter_key: Union[int, Callable[[np.ndarray], np.ndarray]] = None,
+    filter_key: Union[int, Callable[[np.ndarray], np.ndarray]] | None = None,
     do_all2all: bool = False,
-    replace_notfound_key: int = None,
-):
+    replace_notfound_key: int | None = None,
+) -> ParticleDataT:
     """Distribute data among neighboring ranks and all2all by a key
 
     This function will assign data to the rank that owns the key. The keys that the
@@ -35,6 +35,9 @@ def exchange(
     Returns
     -------
     """
+    if TYPE_CHECKING:
+        from mpi4py.MPI import Cartcomm, Distgraphcomm
+        from mpi4py.typing import BufSpec, BufSpecB, BufSpecV
 
     if not do_all2all and partition.comm_neighbor is None:
         raise RuntimeError(
@@ -48,6 +51,11 @@ def exchange(
     if nranks == 1:
         return data
 
+    exchange_comm: Cartcomm | Distgraphcomm
+    exchange_Alltoall: Callable[[BufSpecB, BufSpecB], None]
+    exchange_Alltoallv: Callable[[BufSpecV, BufSpecV], None]
+    exchange_Allgather: Callable[[BufSpecB, BufSpecB], None]
+    exchange_Allgatherv: Callable[[BufSpec, BufSpecV], None]
     if do_all2all:
         # exchange particles with all ranks
         exchange_comm = comm
@@ -59,12 +67,14 @@ def exchange(
 
     else:
         # exchange particles with the neighboring ranks
+        assert partition.comm_neighbor is not None
+        assert partition.neighbor_ranks is not None
         exchange_comm = partition.comm_neighbor
         exchange_nranks = len(partition.neighbor_ranks)
-        exchange_Alltoall = exchange_comm.Neighbor_alltoall
-        exchange_Alltoallv = exchange_comm.Neighbor_alltoallv
-        exchange_Allgather = exchange_comm.Neighbor_allgather
-        exchange_Allgatherv = exchange_comm.Neighbor_allgatherv
+        exchange_Alltoall = partition.comm_neighbor.Neighbor_alltoall
+        exchange_Alltoallv = partition.comm_neighbor.Neighbor_alltoallv
+        exchange_Allgather = partition.comm_neighbor.Neighbor_allgather
+        exchange_Allgatherv = partition.comm_neighbor.Neighbor_allgatherv
 
     localcount = len(data[key])
     data_keys = np.unique(data[key])
@@ -162,7 +172,7 @@ def exchange(
         comm.Abort()
 
     # prepare data to send
-    orphan_requests_indices = []
+    orphan_requests_indices: list[np.ndarray] = []
     orphan_requests_mask = np.zeros(localcount, dtype=np.bool_)
     for i in range(exchange_nranks):
         req = orphan_requests_recv[

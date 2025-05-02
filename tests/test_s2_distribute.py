@@ -8,7 +8,7 @@ import pytest
 from mpipartition import S2Partition, s2_distribute
 
 
-def create_and_distribute(N, equal_area):
+def create_and_distribute(N: int, equal_area: bool) -> None:
     partition = S2Partition(equal_area=equal_area)
     np.random.seed(partition.rank)
 
@@ -29,10 +29,10 @@ def create_and_distribute(N, equal_area):
 
 
 @pytest.mark.mpi
-def test_s2_distribute_equal_area():
+def test_s2_distribute_equal_area() -> None:
     create_and_distribute(100, equal_area=True)
 
 
 @pytest.mark.mpi
-def test_s2_distribute_unequal_area():
+def test_s2_distribute_unequal_area() -> None:
     create_and_distribute(100, equal_area=False)

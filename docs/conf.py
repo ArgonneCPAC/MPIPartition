@@ -17,9 +17,10 @@
 # relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 #
-import os, sys, shutil, subprocess
+import os, sys
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 DIR = Path(__file__).parent.resolve()
 sys.path.insert(0, os.path.abspath(".."))
@@ -128,7 +129,7 @@ htmlhelp_basename = "mpipartitiondoc"
 
 # -- Options for LaTeX output ------------------------------------------
 
-latex_elements = {
+latex_elements: dict[str, str] = {
     # The paper size ('letterpaper' or 'a4paper').
     #
     # 'papersize': 'letterpaper',
@@ -181,8 +182,11 @@ texinfo_documents = [
     ),
 ]
 
+if TYPE_CHECKING:
+    from sphinx.application import Sphinx
 
-def prepare(app):
+
+def prepare(app: Sphinx) -> None:
     with open(DIR.parent / "README.rst") as f:
         contents = f.read()
 
@@ -194,11 +198,11 @@ def prepare(app):
         f.write(contents)
 
 
-def clean_up(app, exception):
+def clean_up(app: Sphinx, exception: Exception) -> None:
     (DIR / "readme.rst").unlink()
 
 
-def setup(app):
+def setup(app: Sphinx) -> None:
     app.add_css_file("css/custom.css")
     # Copy the readme in
     app.connect("builder-inited", prepare)

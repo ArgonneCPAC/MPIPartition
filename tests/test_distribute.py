@@ -8,14 +8,16 @@ import pytest
 from mpipartition import Partition, distribute
 
 
-def create_and_distribute(dimensions, N):
+def create_and_distribute(dimensions: int, N: int) -> None:
     partition = Partition(dimensions)
     assert dimensions < 7
     assert dimensions > 0
     labels = "xyzuvw"[:dimensions]
+    # as a list of characters
+    coord_keys = [x for x in labels]
 
     data = {x: np.random.uniform(0, 1, N) for x in labels}
-    data = distribute(partition, 1.0, data, labels)
+    data = distribute(partition, 1.0, data, coord_keys)
 
     valid = np.ones(len(data[labels[0]]), dtype=np.bool_)
     for i, label in enumerate(labels):
@@ -30,20 +32,20 @@ def create_and_distribute(dimensions, N):
 
 
 @pytest.mark.mpi
-def test_1d():
+def test_1d() -> None:
     create_and_distribute(1, 1000)
 
 
 @pytest.mark.mpi
-def test_2d():
+def test_2d() -> None:
     create_and_distribute(2, 100)
 
 
 @pytest.mark.mpi
-def test_3d():
+def test_3d() -> None:
     create_and_distribute(3, 10)
 
 
 @pytest.mark.mpi
-def test_4d():
+def test_4d() -> None:
     create_and_distribute(4, 5)

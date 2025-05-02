@@ -27,8 +27,6 @@ matplotlib = { version = "^3.7.1", optional = true }
 click = { version = "^8.1.3", optional = true }
 
 [tool.poetry.group.dev.dependencies]
-black = "^24.4.2"
-flake8 = "^7.0.0"
 Sphinx = "^7.3.7"
 sphinx-rtd-theme = "^3.0.2"
 sphinxcontrib-napoleon = "^0.7"
@@ -38,6 +36,8 @@ numpydoc = "^1.7.0"
 pytest = "^8.2.2"
 pytest-mpi = "^0.6"
 ipykernel = "^6.23.1"
+ruff = "^0.11.8"
+mypy = "^1.15.0"
 
 [tool.poetry.extras]
 viz = ["matplotlib", "click"]
@@ -48,9 +48,3 @@ mpipartition-s2 = "mpipartition.scripts.s2_prediction:cli"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.black]
-line-length = 88
-target-version = ["py39"]
-include = '\.pyi?$'
-exclude = '\.git|\.venv|build|_build|dist'

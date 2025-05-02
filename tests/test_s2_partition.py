@@ -9,7 +9,12 @@ from mpipartition import S2Partition
 from mpipartition.spherical_partition.s2_partition import _cap_area
 
 
-def _test_segmentation(theta_cap, ring_thetas, ring_segments, segment_list):
+def _test_segmentation(
+    theta_cap: float,
+    ring_thetas: np.ndarray,
+    ring_segments: np.ndarray,
+    segment_list: list,
+) -> None:
     assert len(segment_list) == np.sum(ring_segments) + 2
     assert np.isclose(segment_list[0].theta_range[0], 0.0)
     assert np.isclose(segment_list[0].theta_range[1], theta_cap)
@@ -37,7 +42,7 @@ def _test_segmentation(theta_cap, ring_thetas, ring_segments, segment_list):
             )
 
 
-def _partition(equal_area: bool):
+def _partition(equal_area: bool) -> S2Partition:
     partition = S2Partition(equal_area=equal_area)
     assert partition.equal_area == equal_area
     assert len(partition._all_s2_segments) == partition.nranks
@@ -73,7 +78,7 @@ def _partition(equal_area: bool):
 
 
 @pytest.mark.mpi
-def test_equal_area_s2partition():
+def test_equal_area_s2partition() -> None:
     partition = _partition(equal_area=True)
     areas = np.array([r.area for r in partition._all_s2_segments])
     assert np.all(np.isclose(areas, areas[0]))
@@ -81,7 +86,7 @@ def test_equal_area_s2partition():
 
 
 @pytest.mark.mpi
-def test_equal_dtheta_s2partition():
+def test_equal_dtheta_s2partition() -> None:
     partition = _partition(equal_area=False)
     assert partition.ring_dtheta is not None
     if partition.ring_segments.size:

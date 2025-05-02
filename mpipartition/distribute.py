@@ -1,11 +1,12 @@
 import sys
-from typing import List, Mapping, Union
+from typing import List, Union
 
 import numpy as np
 
-from .partition import MPI, Partition
+from .partition import Partition
+from ._send_home import distribute_dataset_by_home
 
-ParticleDataT = Mapping[str, np.ndarray]
+ParticleDataT = dict[str, np.ndarray]
 
 
 def distribute(
@@ -92,59 +93,12 @@ def distribute(
         # there are no particles on this rank
         home_idx = np.empty(0, dtype=np.int32)
 
-    # sort by rank
-    s = np.argsort(home_idx)
-    home_idx = home_idx[s]
-
-    # offsets and counts
-    send_displacements = np.searchsorted(home_idx, np.arange(nranks))
-    send_displacements = send_displacements.astype(np.int32)
-    send_counts = np.append(send_displacements[1:], total_to_send) - send_displacements
-    send_counts = send_counts.astype(np.int32)
-
-    # announce to each rank how many objects will be sent
-    recv_counts = np.empty_like(send_counts)
-    comm.Alltoall(send_counts, recv_counts)
-    recv_displacements = np.insert(np.cumsum(recv_counts)[:-1], 0, 0)
-
-    # number of objects that this rank will receive
-    total_to_receive = np.sum(recv_counts)
-
-    # debug message
-    if verbose > 1:
-        for i in range(nranks):
-            if rank == i:
-                print(f"Distribute Debug Rank {i}")
-                print(f" - rank has {total_to_send} particles")
-                print(f" - rank receives {total_to_receive} particles")
-                print(f" - send_counts:        {send_counts}")
-                print(f" - send_displacements: {send_displacements}")
-                print(f" - recv_counts:        {recv_counts}")
-                print(f" - recv_displacements: {recv_displacements}")
-                print(f"", flush=True)
-            comm.Barrier()
-
-    # send data all-to-all, each array individually
-    data_new = {k: np.empty(total_to_receive, dtype=data[k].dtype) for k in data.keys()}
-
-    for k in data.keys():
-        d = data[k][s]
-        s_msg = [d, (send_counts, send_displacements), d.dtype.char]
-        r_msg = [data_new[k], (recv_counts, recv_displacements), d.dtype.char]
-        comm.Alltoallv(s_msg, r_msg)
-
-    if verify_count:
-        local_counts = np.array(
-            [len(data[coord_keys[0]]), len(data_new[coord_keys[0]])], dtype=np.int64
-        )
-        global_counts = np.empty_like(local_counts)
-        comm.Reduce(local_counts, global_counts, op=MPI.SUM, root=0)
-        if rank == 0 and global_counts[0] != global_counts[1]:
-            print(
-                f"Error in distribute: particle count during distribute was not maintained ({global_counts[0]} -> {global_counts[1]})",
-                file=sys.stderr,
-                flush=True,
-            )
-            comm.Abort()
+    data_new = distribute_dataset_by_home(
+        partition,
+        data,
+        home_idx=home_idx,
+        verbose=verbose,
+        verify_count=verify_count,
+    )
 
     return data_new

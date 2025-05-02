@@ -1,11 +1,12 @@
 import itertools
-from typing import List, Mapping, Union
+from typing import List, Union
 
 import numpy as np
+import numpy.typing as npt
 
 from .partition import Partition
 
-ParticleDataT = Mapping[str, np.ndarray]
+ParticleDataT = dict[str, np.ndarray]
 
 
 def overload(
@@ -15,9 +16,9 @@ def overload(
     overload_length: float,
     coord_keys: List[str],
     *,
-    structure_key: str = None,
+    structure_key: str | None = None,
     verbose: Union[bool, int] = False,
-):
+) -> ParticleDataT:
     """Copy data within an overload length to the neighboring ranks
 
     This method assumes that the volume cube is periodic and will wrap the data
@@ -113,7 +114,7 @@ def overload(
         if structure_key is not None:
             # find all structures present in objects to be overloaded right
             all_structs = np.unique(data[structure_key][_i == 1])
-            all_structs = np.unique(all_structs, -1)
+            # all_structs = np.unique(all_structs, -1)
             # add objects with these structure flags to the mask
             all_structs_mask = np.isin(data[structure_key], all_structs)
             _i[all_structs_mask] = 1
@@ -123,7 +124,7 @@ def overload(
     # Get particle indices of each of the 27 neighbors overload
     exchange_indices = [np.empty(0, dtype=np.int64) for i in range(nranks)]
 
-    def add_exchange_indices(mask, idx):
+    def add_exchange_indices(mask: npt.NDArray[np.bool_], idx: tuple[int, ...]) -> None:
         assert len(idx) == dimensions
         n = neighbors[tuple(_i + 1 for _i in idx)]
         if n != rank:

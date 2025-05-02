@@ -1,22 +1,27 @@
 import numpy as np
 import numpy.typing as npt
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Any, TypeVar, cast
 from dataclasses import dataclass
 
 from mpi4py import MPI
 
 
-def _cap_area(theta):
+TNumber = TypeVar("TNumber", float, np.floating, npt.NDArray[np.floating])
+
+
+def _cap_area(theta: TNumber) -> TNumber:
     h = 1 - np.cos(theta)
-    return 2 * np.pi * h
+    return cast(TNumber, 2 * np.pi * h)
 
 
-def _cap_angle(area):
+def _cap_angle(area: TNumber) -> TNumber:
     h = area / (2 * np.pi)
-    return np.arccos(1 - h)
+    return cast(TNumber, np.arccos(1 - h))
 
 
-def _s2_partition(n, adjust_theta=True):
+def _s2_partition(
+    n: int, adjust_theta: bool = True
+) -> tuple[float, npt.NDArray[np.floating], npt.NDArray[np.integer]]:
     # Following the algorithm by Paul Leopardi (https://eqsp.sourceforge.net/)
     # TODO: generalize to arbitrary number of dimensions
     assert n > 1
@@ -63,13 +68,15 @@ def _s2_partition(n, adjust_theta=True):
 
 @dataclass
 class S2Segment:
-    theta_range: Tuple[float]
-    phi_range: Tuple[float]
+    theta_range: tuple[float, float]
+    phi_range: tuple[float, float]
     area: float
     edge_length: float
 
 
-def _build_s2_segment_list(theta_cap, ring_thetas, ring_segments):
+def _build_s2_segment_list(
+    theta_cap: float, ring_thetas: np.ndarray, ring_segments: np.ndarray
+) -> list[S2Segment]:
     segments = []
 
     # cap
@@ -109,20 +116,24 @@ def _build_s2_segment_list(theta_cap, ring_thetas, ring_segments):
 
 
 def _print_segmentation_info(
-    nranks, theta_cap, ring_thetas, ring_segments, precision=3
-):
+    nranks: int,
+    theta_cap: float,
+    ring_thetas: np.ndarray,
+    ring_segments: np.ndarray,
+    precision: int = 3,
+) -> None:
     print(f"Segmentation statistics for {nranks} ranks:")
     print(f"  polar cap angle: {theta_cap:.{precision}f}")
     print(f"  number of rings: {len(ring_segments)}")
     for i in range(len(ring_segments)):
         print(
             f"    ring {i:3d}: {ring_segments[i]:3d} segments between "
-            f"theta=[{ring_thetas[i]:.{precision}f}, {ring_thetas[i+1]:.{precision}f}]]"
+            f"theta=[{ring_thetas[i]:.{precision}f}, {ring_thetas[i + 1]:.{precision}f}]]"
         )
 
 
 # area imbalance
-def _print_area_imabalance(segments: List[S2Segment], precision=3):
+def _print_area_imabalance(segments: list[S2Segment], precision: int = 3) -> None:
     areas = np.array([r.area for r in segments])
     assert np.isclose(np.sum(areas), 4 * np.pi)
     print("  Segment area imbalance:")
@@ -130,7 +141,7 @@ def _print_area_imabalance(segments: List[S2Segment], precision=3):
     print(f"    max/avg: {np.max(areas) / np.mean(areas):.{precision}f}")
 
 
-def _print_edge_to_area_ratio(segments: List[S2Segment], precision=3):
+def _print_edge_to_area_ratio(segments: list[S2Segment], precision: int = 3) -> None:
     areas = np.array([r.area for r in segments])
     edge_lengths = np.array([r.edge_length for r in segments])
     total_ratio = np.sum(edge_lengths) / np.sum(areas)
@@ -155,11 +166,11 @@ class S2Partition:
     """
 
     # parition properties
-    _comm: MPI.Comm
+    _comm: MPI.Intracomm
     _nranks: int
     _theta_cap: float
-    _ring_thetas: npt.NDArray[np.float64]
-    _ring_segments: npt.NDArray[np.int64]
+    _ring_thetas: npt.NDArray[np.floating]
+    _ring_segments: npt.NDArray[np.integer]
     _equal_area: bool
     _ring_dtheta: Optional[float]
     _all_s2_segments: List[S2Segment]
@@ -169,7 +180,7 @@ class S2Partition:
     _s2_segment: S2Segment
 
     @property
-    def comm(self):
+    def comm(self) -> MPI.Intracomm:
         """MPI Communicator"""
         return self._comm
 
@@ -194,12 +205,12 @@ class S2Partition:
         return self._theta_cap
 
     @property
-    def ring_thetas(self) -> npt.NDArray[np.float64]:
+    def ring_thetas(self) -> npt.NDArray[np.floating]:
         """the theta boundaries of all rings"""
         return self._ring_thetas
 
     @property
-    def ring_segments(self) -> npt.NDArray[np.int64]:
+    def ring_segments(self) -> npt.NDArray[np.integer]:
         """the number of segments in each ring"""
         return self._ring_segments
 
@@ -237,7 +248,7 @@ class S2Partition:
         self,
         *,
         equal_area: bool = True,
-        comm: MPI.Comm = None,
+        comm: MPI.Intracomm | None = None,
         verbose: bool = False,
     ):
         self._mpi_init = False
@@ -278,14 +289,17 @@ class S2Partition:
             _print_edge_to_area_ratio(self._all_s2_segments)
             print()
 
-    def __del__(self):
+    def __del__(self) -> None:
         if self._mpi_init:
             MPI.Finalize()
 
 
 def visualize_s2_partition(
-    nranks: int, equal_area: bool = True, use_mollweide: bool = True, fig=None
-):
+    nranks: int,
+    equal_area: bool = True,
+    use_mollweide: bool = True,
+    fig: Any | None = None,
+) -> Tuple[Any, Any]:
     """Visualize the S2 partitioning of the sphere.
 
     Parameters

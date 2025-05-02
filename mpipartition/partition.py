@@ -1,28 +1,27 @@
-"""MPI Partitioning of a cube
-
-"""
+"""MPI Partitioning of a cube"""
 
 import itertools
 import sys
-from typing import List
 
 import numpy as np
 from mpi4py import MPI
 
 
-def _factorize(n):
+def _factorize(n: int) -> list[int]:
     i = 2
     factors = []
     while i <= n:
         if (n % i) == 0:
             factors.append(i)
-            n /= i
+            n //= i
         else:
             i = i + 1
     return factors
 
 
-def _distribute_factors(factors, target):
+def _distribute_factors(
+    factors: list[int], target: list[int] | np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
     current_topo = np.ones_like(target)
     remaining_topo = np.copy(np.array(target))
     for f in factors[::-1]:
@@ -80,14 +79,13 @@ class Partition:
 
     def __init__(
         self,
-        dimensions=3,
+        dimensions: int = 3,
         *,
-        comm=None,
+        comm: MPI.Intracomm | None = None,
         create_neighbor_topo: bool = False,
-        commensurate_topo: List[int] = None,
-    ):
-        self._topo = None
-        self._neighbor_topo = None
+        commensurate_topo: list[int] | None = None,
+    ) -> None:
+        self._neighbor_topo: MPI.Distgraphcomm | None = None
         self._neighbor_ranks = None
 
         self._dimensions = dimensions
@@ -156,61 +154,61 @@ class Partition:
                     self._topo.Abort()
             self._neighbor_ranks = inout_neighbors[0]
 
-    def __del__(self):
+    def __del__(self) -> None:
         if self._neighbor_topo is not None:
             self._neighbor_topo.Free()
-        if self._topo is not None:
+        if hasattr(self, "_topo"):
             self._topo.Free()
         if self._mpi_init:
             MPI.Finalize()
 
     @property
-    def dimensions(self):
+    def dimensions(self) -> int:
         """Dimension of the partitioned volume"""
         return self._dimensions
 
     @property
-    def comm(self):
+    def comm(self) -> MPI.Cartcomm:
         """3D Cartesian MPI Topology / Communicator"""
         return self._topo
 
     @property
-    def comm_neighbor(self):
+    def comm_neighbor(self) -> MPI.Distgraphcomm | None:
         """Graph MPI Topology / Communicator, connecting the neighboring ranks
         (symmetric)"""
         return self._neighbor_topo
 
     @property
-    def rank(self):
+    def rank(self) -> int:
         """int: the MPI rank of this processor"""
-        return self._topo.rank
+        return self._rank
 
     @property
-    def nranks(self):
+    def nranks(self) -> int:
         """int: the total number of processors"""
         return self._nranks
 
     @property
-    def decomposition(self):
+    def decomposition(self) -> list[int]:
         """np.ndarray: the decomposition of the cubic volume: number of ranks along each dimension"""
         return self._decomposition
 
     @property
-    def coordinates(self):
+    def coordinates(self) -> list[int]:
         """np.ndarray: 3D indices of this processor"""
         return self._coords
 
     @property
-    def extent(self):
+    def extent(self) -> list[float]:
         """np.ndarray: Length along each axis of this processors subvolume (same for all procs)"""
         return self._extent
 
     @property
-    def origin(self) -> np.ndarray:
+    def origin(self) -> list[float]:
         """np.ndarray: Cartesian coordinates of the origin of this processor"""
         return self._origin
 
-    def get_neighbor(self, di: List[int]) -> int:
+    def get_neighbor(self, di: list[int]) -> int:
         """get the rank of the neighbor at relative position (dx, dy, dz, ...)
 
         Parameters
@@ -223,18 +221,18 @@ class Partition:
         return self._neighbors[np.array(di) + 1]
 
     @property
-    def neighbors(self):
+    def neighbors(self) -> np.ndarray:
         """np.ndarray: a 3^d dimensional array with the ranks of the neighboring processes
         (`neighbors[1,1,1, ...]` is this processor)"""
         return self._neighbors
 
     @property
-    def neighbor_ranks(self):
+    def neighbor_ranks(self) -> list[int] | None:
         """np.ndarray: a flattened list of the unique neighboring ranks"""
         return self._neighbor_ranks
 
     @property
-    def ranklist(self):
+    def ranklist(self) -> np.ndarray:
         """np.ndarray: A complete list of ranks, aranged by their coordinates.
         The array has shape `partition.decomposition`"""
         ranklist = np.empty(self.decomposition, dtype=np.int32)

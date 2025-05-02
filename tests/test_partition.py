@@ -9,11 +9,12 @@ from mpipartition import Partition
 
 
 @pytest.mark.xfail
-def test_partition_0d():
+def test_partition_0d() -> None:
     partition = Partition(0)
+    partition
 
 
-def _partition(dim):
+def _partition(dim: int) -> None:
     partition = Partition(dim)
     assert partition.dimensions == dim
     assert np.array(partition.decomposition).ndim == 1
@@ -29,15 +30,15 @@ def _partition(dim):
 
 
 @pytest.mark.mpi
-def test_partition_1d():
+def test_partition_1d() -> None:
     _partition(1)
 
 
 @pytest.mark.mpi
-def test_partition_2d():
+def test_partition_2d() -> None:
     _partition(2)
 
 
 @pytest.mark.mpi
-def test_partition_3d():
+def test_partition_3d() -> None:
     _partition(3)

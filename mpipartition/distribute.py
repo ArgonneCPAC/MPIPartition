@@ -17,6 +17,7 @@ def distribute(
     *,
     verbose: Union[bool, int] = False,
     verify_count: bool = True,
+    all2all_iterations: int = 1,
 ) -> ParticleDataT:
     """Distribute data among MPI ranks according to data position and volume partition
 
@@ -46,6 +47,10 @@ def distribute(
 
     verify_count:
         If True, make sure that total number of objects is conserved
+
+    all2all_iterations:
+        The number of iterations to use for the all-to-all communication.
+        This is useful for large datasets, where MPI_Alltoallv may fail
 
     Returns
     -------
@@ -99,6 +104,7 @@ def distribute(
         home_idx=home_idx,
         verbose=verbose,
         verify_count=verify_count,
+        all2all_iterations=all2all_iterations,
     )
 
     return data_new

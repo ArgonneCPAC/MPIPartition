@@ -18,6 +18,40 @@ def distribute_dataset_by_home(
     *,
     verbose: int = 0,
     verify_count: bool = True,
+    all2all_iterations: int = 1,
+) -> ParticleDataT:
+    total_to_send = len(home_idx)
+    nperiteration = total_to_send // all2all_iterations
+    data_new_list: list[ParticleDataT] = []
+    for i in range(all2all_iterations):
+        start_idx = i * nperiteration
+        end_idx = (
+            (i + 1) * nperiteration if i < all2all_iterations - 1 else total_to_send
+        )
+        if partition.rank == 0 and verbose > 0:
+            print(f"  - Distributing particles iteration {i + 1}/{all2all_iterations}")
+        _data = {k: v[start_idx:end_idx] for k, v in data.items()}
+        _home_idx = home_idx[start_idx:end_idx]
+        _data = _distribute_dataset_by_home(
+            partition,
+            _data,
+            _home_idx,
+            verbose=verbose,
+            verify_count=verify_count,
+        )
+        data_new_list.append(_data)
+    # concatenate the data
+    data_new = {k: np.concatenate([d[k] for d in data_new_list]) for k in data.keys()}
+    return data_new
+
+
+def _distribute_dataset_by_home(
+    partition: Partition | S2Partition,
+    data: ParticleDataT,
+    home_idx: np.ndarray,
+    *,
+    verbose: int = 0,
+    verify_count: bool = True,
 ) -> ParticleDataT:
     total_to_send = len(home_idx)
     for d in data.values():

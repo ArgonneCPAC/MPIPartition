@@ -16,6 +16,7 @@ def s2_distribute(
     verbose: Union[bool, int] = False,
     verify_count: bool = True,
     validate_home: bool = False,
+    all2all_iterations: int = 1,
 ) -> ParticleDataT:
     """Distribute particles among MPI ranks according to the S2 partition.
 
@@ -47,6 +48,10 @@ def s2_distribute(
 
     validate_home:
         If True, validate that each rank indeed owns the particles that it was sent.
+
+    all2all_iterations:
+        The number of iterations to use for the all-to-all communication.
+        This is useful for large datasets, where MPI_Alltoallv may fail.
 
     Returns
     -------
@@ -102,6 +107,7 @@ def s2_distribute(
         home_idx=home_idx,
         verbose=verbose,
         verify_count=verify_count,
+        all2all_iterations=all2all_iterations,
     )
 
     if validate_home:

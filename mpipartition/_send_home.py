@@ -23,6 +23,16 @@ def distribute_dataset_by_home(
     total_to_send = len(home_idx)
     nperiteration = total_to_send // all2all_iterations
     data_new_list: list[ParticleDataT] = []
+
+    # Some general assertions that every rank has valid data
+    keys = list(data.keys())
+    keys_0 = partition.comm.bcast(keys, root=0)
+    assert len(keys) == len(keys_0)
+    assert all(k in keys_0 for k in keys)
+    dtype_string = "".join(data[k].dtype.char for k in keys_0)
+    dtype_string_0 = partition.comm.bcast(dtype_string, root=0)
+    assert dtype_string == dtype_string_0
+
     for i in range(all2all_iterations):
         start_idx = i * nperiteration
         end_idx = (
@@ -36,6 +46,7 @@ def distribute_dataset_by_home(
             partition,
             _data,
             _home_idx,
+            keys_0,
             verbose=verbose,
             verify_count=verify_count,
         )
@@ -49,6 +60,7 @@ def _distribute_dataset_by_home(
     partition: Partition | S2Partition,
     data: ParticleDataT,
     home_idx: np.ndarray,
+    keys: list[str],
     *,
     verbose: int = 0,
     verify_count: bool = True,
@@ -92,14 +104,14 @@ def _distribute_dataset_by_home(
     # send data all-to-all, each array individually
     data_new = {k: np.empty(total_to_receive, dtype=data[k].dtype) for k in data.keys()}
 
-    for k in data.keys():
+    for k in keys:
         d = data[k][s]
         s_msg = [d, (send_counts, send_displacements), d.dtype.char]
         r_msg = [data_new[k], (recv_counts, recv_displacements), d.dtype.char]
         partition.comm.Alltoallv(s_msg, r_msg)
 
     if verify_count:
-        key0 = list(data.keys())[0]
+        key0 = keys[0]
         local_counts = np.array([len(data[key0]), len(data_new[key0])], dtype=np.int64)
         global_counts = np.empty_like(local_counts)
         partition.comm.Reduce(local_counts, global_counts, op=MPI.SUM, root=0)

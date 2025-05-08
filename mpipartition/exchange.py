@@ -206,7 +206,11 @@ def exchange(
             comm.Barrier()
 
     data_new = {}
-    for k in data.keys():
+    keys = list(data.keys())
+    keys_0 = partition.comm.bcast(keys, root=0)
+    assert len(keys) == len(keys_0), "Keys must be the same on all ranks"
+    assert all(k in keys_0 for k in keys), "Keys must be the same on all ranks"
+    for k in keys_0:
         orphan_requests_send = data[k][orphan_requests_indices]
         orphan_requests_recv = np.empty(orphan_requests_recv_total, dtype=data[k].dtype)
         exchange_Alltoallv(

@@ -203,7 +203,11 @@ def s2_overload(
     # send data all-to-all, each array individually
     data_new = {}
 
-    for k in data.keys():
+    keys = list(data.keys())
+    keys_0 = partition.comm.bcast(keys, root=0)
+    assert len(keys) == len(keys_0), "Keys must be the same on all ranks"
+    assert all(k in keys_0 for k in keys), "Keys must be the same on all ranks"
+    for k in keys_0:
         # prepare send-array
         ds = data[k][send_permutation]
         # prepare recv-array

@@ -39,7 +39,7 @@ jobs:
         run: poetry install --no-interaction --no-root --all-extras
 
       - name: Install library
-        run: poetry install --no-interaction
+        run: poetry install --no-interaction --all-extras
 
       - name: MyPy Type checking
         run: poetry run mypy --config-file mypy.ini --show-error-codes

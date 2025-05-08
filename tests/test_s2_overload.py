@@ -2,7 +2,6 @@
 
 """Tests for `mpipartition` package."""
 
-
 import numpy as np
 import pytest
 
@@ -12,7 +11,7 @@ from mpi4py import MPI
 nranks = MPI.COMM_WORLD.Get_size()
 
 
-def _overloading(n, overload_angle, equal_area):
+def _overloading(n: int, overload_angle: float, equal_area: bool) -> None:
     partition = S2Partition(equal_area=equal_area)
 
     rank = partition.rank
@@ -23,7 +22,7 @@ def _overloading(n, overload_angle, equal_area):
     np.random.seed(rank)
 
     # generate data within our partition
-    data = {
+    data: dict[str, np.ndarray] = {
         "phi": np.random.uniform(
             my_phi_range[0],
             my_phi_range[1],
@@ -98,10 +97,10 @@ def _overloading(n, overload_angle, equal_area):
 
 
 @pytest.mark.mpi
-def test_ovlerload_equal_area():
+def test_ovlerload_equal_area() -> None:
     _overloading(100, 0.2, equal_area=True)
 
 
 @pytest.mark.mpi
-def test_ovlerload_unequal_area():
+def test_ovlerload_unequal_area() -> None:
     _overloading(100, 0.2, equal_area=False)

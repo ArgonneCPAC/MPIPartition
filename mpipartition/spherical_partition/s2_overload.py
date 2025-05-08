@@ -1,11 +1,11 @@
-from typing import List, Mapping, Union
+from typing import Union
 
 import numpy as np
 import numba
 
 from .s2_partition import S2Partition
 
-ParticleDataT = Mapping[str, np.ndarray]
+ParticleDataT = dict[str, np.ndarray]
 
 
 @numba.jit(nopython=True)
@@ -20,7 +20,7 @@ def _count_neighbors(
     segment_phi_high: np.ndarray,
     send_counts: np.ndarray,
     send_counts_by_rank: np.ndarray,
-):
+) -> None:
     npart = len(theta)
     nsegments = len(segment_theta_low)
     for i in range(npart):
@@ -54,7 +54,7 @@ def _calculate_partition(
     segment_phi_high: np.ndarray,
     send_offset_by_rank: np.ndarray,
     send_permutation: np.ndarray,
-):
+) -> None:
     send_count_by_rank = np.zeros_like(send_offset_by_rank)
     npart = len(theta)
     nsegments = len(segment_theta_low)
@@ -85,7 +85,7 @@ def s2_overload(
     theta_key: str = "theta",
     phi_key: str = "phi",
     verbose: Union[bool, int] = False,
-):
+) -> ParticleDataT:
     """Copy data within an overload angle to the neighboring ranks ("ghost" particles)
 
     This method assumes that the particle data is already correctly distributed, i.e.
@@ -203,7 +203,11 @@ def s2_overload(
     # send data all-to-all, each array individually
     data_new = {}
 
-    for k in data.keys():
+    keys = list(data.keys())
+    keys_0 = partition.comm.bcast(keys, root=0)
+    assert len(keys) == len(keys_0), "Keys must be the same on all ranks"
+    assert all(k in keys_0 for k in keys), "Keys must be the same on all ranks"
+    for k in keys_0:
         # prepare send-array
         ds = data[k][send_permutation]
         # prepare recv-array

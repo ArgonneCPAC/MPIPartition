@@ -2,13 +2,12 @@
 
 """Tests for `mpipartition` package."""
 
-
 import pytest
 from mpipartition import Partition, exchange
 import numpy as np
 
 
-def create_and_distribute(partition: Partition, N: int):
+def create_and_distribute(partition: Partition, N: int) -> None:
     data = {
         "id": np.arange(N, dtype=np.int32) + partition.rank * N,
         "origin": partition.rank * np.ones(N, dtype=np.int32),
@@ -25,18 +24,18 @@ def create_and_distribute(partition: Partition, N: int):
 
 
 @pytest.mark.mpi
-def test_exchange_10():
+def test_exchange_10() -> None:
     partition = Partition(1, create_neighbor_topo=True)
     create_and_distribute(partition, 10)
 
 
 @pytest.mark.mpi
-def test_exchange_80():
+def test_exchange_80() -> None:
     partition = Partition(1, create_neighbor_topo=True)
     create_and_distribute(partition, 80)
 
 
 @pytest.mark.mpi
-def test_exchange_101():
+def test_exchange_101() -> None:
     partition = Partition(1, create_neighbor_topo=True)
     create_and_distribute(partition, 101)

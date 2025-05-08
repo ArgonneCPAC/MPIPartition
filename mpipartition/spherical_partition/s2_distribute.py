@@ -1,11 +1,10 @@
-from typing import Mapping, List, Union
+from typing import Union
 import numpy as np
-import sys
 
 from .s2_partition import S2Partition
-from mpi4py import MPI
+from .._send_home import distribute_dataset_by_home
 
-ParticleDataT = Mapping[str, np.ndarray]
+ParticleDataT = dict[str, np.ndarray]
 
 
 def s2_distribute(
@@ -17,6 +16,7 @@ def s2_distribute(
     verbose: Union[bool, int] = False,
     verify_count: bool = True,
     validate_home: bool = False,
+    all2all_iterations: int = 1,
 ) -> ParticleDataT:
     """Distribute particles among MPI ranks according to the S2 partition.
 
@@ -49,14 +49,16 @@ def s2_distribute(
     validate_home:
         If True, validate that each rank indeed owns the particles that it was sent.
 
+    all2all_iterations:
+        The number of iterations to use for the all-to-all communication.
+        This is useful for large datasets, where MPI_Alltoallv may fail.
+
     Returns
     -------
     data: ParticleDataT
         The distributed particle data (i.e. the data that this rank owns)
 
     """
-    # count number of particles we have
-    total_to_send = len(data[theta_key])
 
     # verify data is normalized
     assert np.all(data[theta_key] >= 0)
@@ -97,63 +99,14 @@ def s2_distribute(
     assert np.all(home_idx >= 0)
     assert np.all(home_idx < partition.nranks)
 
-    # TODO: this code is duplicated in distribute.py – unify!
-
-    # sort by rank
-    s = np.argsort(home_idx)
-    home_idx = home_idx[s]
-
-    # offsets and counts
-    send_displacements = np.searchsorted(home_idx, np.arange(partition.nranks))
-    send_displacements = send_displacements.astype(np.int32)
-    send_counts = np.append(send_displacements[1:], total_to_send) - send_displacements
-    send_counts = send_counts.astype(np.int32)
-
-    # announce to each rank how many objects will be sent
-    recv_counts = np.empty_like(send_counts)
-    partition.comm.Alltoall(send_counts, recv_counts)
-    recv_displacements = np.insert(np.cumsum(recv_counts)[:-1], 0, 0)
-
-    # number of objects that this rank will receive
-    total_to_receive = np.sum(recv_counts)
-
-    # debug message
-    if verbose > 1:
-        for i in range(partition.nranks):
-            if partition.rank == i:
-                print(f"Distribute Debug Rank {i}")
-                print(f" - rank has {total_to_send} particles")
-                print(f" - rank receives {total_to_receive} particles")
-                print(f" - send_counts:        {send_counts}")
-                print(f" - send_displacements: {send_displacements}")
-                print(f" - recv_counts:        {recv_counts}")
-                print(f" - recv_displacements: {recv_displacements}")
-                print(f"", flush=True)
-            partition.comm.Barrier()
-
-    # send data all-to-all, each array individually
-    data_new = {k: np.empty(total_to_receive, dtype=data[k].dtype) for k in data.keys()}
-
-    for k in data.keys():
-        d = data[k][s]
-        s_msg = [d, (send_counts, send_displacements), d.dtype.char]
-        r_msg = [data_new[k], (recv_counts, recv_displacements), d.dtype.char]
-        partition.comm.Alltoallv(s_msg, r_msg)
-
-    if verify_count:
-        local_counts = np.array(
-            [len(data[theta_key]), len(data_new[theta_key])], dtype=np.int64
-        )
-        global_counts = np.empty_like(local_counts)
-        partition.comm.Reduce(local_counts, global_counts, op=MPI.SUM, root=0)
-        if partition.rank == 0 and global_counts[0] != global_counts[1]:
-            print(
-                f"Error in distribute: particle count during distribute was not "
-                f"maintained ({global_counts[0]} -> {global_counts[1]})",
-                file=sys.stderr,
-                flush=True,
-            )
-            partition.comm.Abort()
+    data_new = distribute_dataset_by_home(
+        partition,
+        data,
+        home_idx=home_idx,
+        verbose=verbose,
+        verify_count=verify_count,
+        all2all_iterations=all2all_iterations,
+    )
 
     if validate_home:
         assert np.all(data_new[theta_key] >= partition.theta_extent[0])

@@ -22,8 +22,7 @@ from mpipartition.spherical_partition.s2_partition import (
     "--equal-area",
     is_flag=True,
     help=(
-        "If set, partition S2 into equal area segments by varying delta_theta of "
-        "rings."
+        "If set, partition S2 into equal area segments by varying delta_theta of rings."
     ),
 )
 @click.option(
@@ -59,7 +58,7 @@ def cli(
     figure: Optional[str],
     use_mollweide: bool,
     figure_pad: float,
-):
+) -> None:
     theta_cap, ring_thetas, ring_segments = _s2_partition(nranks, equal_area)
     all_s2_segments = _build_s2_segment_list(theta_cap, ring_thetas, ring_segments)
     _print_segmentation_info(
@@ -73,9 +72,9 @@ def cli(
     _print_edge_to_area_ratio(all_s2_segments, precision=precision)
 
     if figure is not None:
-        try:
-            import matplotlib.pyplot as plt
-        except ImportError:
+        import importlib.util
+
+        if importlib.util.find_spec("matplotlib") is None:
             print(
                 "matplotlib is required for visualization, install mpipartition with "
                 "`pip install mpipartition[viz]",

@@ -2,7 +2,6 @@
 
 """Tests for `mpipartition` package."""
 
-
 import numpy as np
 import pytest
 
@@ -14,7 +13,7 @@ if not MPI.Is_initialized():
 nranks = MPI.COMM_WORLD.Get_size()
 
 
-def _overloading(dimensions, n, ol):
+def _overloading(dimensions: int, n: int, ol: float) -> None:
     assert dimensions < 7
     labels = "xyzuvw"[:dimensions]
 
@@ -24,7 +23,7 @@ def _overloading(dimensions, n, ol):
     np.random.seed(rank)
 
     # generate data within our partition
-    data = {
+    data: dict[str, np.ndarray] = {
         x: np.random.uniform(0, 1, n) * partition.extent[i] + partition.origin[i]
         for i, x in enumerate(labels)
     }
@@ -40,7 +39,7 @@ def _overloading(dimensions, n, ol):
         assert len(global_data[k]) == nranks * n
 
     # overload data
-    data = overload(partition, 1.0, data, ol, labels)
+    data = overload(partition, 1.0, data, ol, coord_keys=[x for x in labels])
 
     # did we give away any of our data?
     assert np.sum(data["s"] == rank) == n
@@ -90,30 +89,32 @@ def _overloading(dimensions, n, ol):
     assert np.sum(mask_should_have) == len(data[labels[0]])
 
 
-def _check_0overload(dimensions, n):
+def _check_0overload(dimensions: int, n: int) -> None:
     assert dimensions < 7
     labels = "xyzuvw"[:dimensions]
+    coord_keys = [x for x in labels]
 
     partition = Partition(dimensions)
 
     rank = partition.rank
 
     np.random.seed(rank)
-    data = {
+    data: dict[str, np.ndarray] = {
         x: np.random.uniform(0, 1, n) * partition.extent[i] + partition.origin[i]
         for i, x in enumerate(labels)
     }
     data["s"] = rank * np.ones(n, dtype=np.uint16)
 
-    data_ol = overload(partition, 1.0, data, 0.0, labels)
+    data_ol = overload(partition, 1.0, data, 0.0, coord_keys)
     # Check that we haven't changed any of the data
     assert len(data_ol[labels[0]] == n)
     assert np.all(data["s"] == rank)
 
 
-def _overloading_struct(dimensions, n, ol):
+def _overloading_struct(dimensions: int, n: int, ol: float) -> None:
     assert dimensions < 7
     labels = "xyzuvw"[:dimensions]
+    coord_keys = [x for x in labels]
 
     n_struct = int(n / 4)
 
@@ -123,7 +124,7 @@ def _overloading_struct(dimensions, n, ol):
     np.random.seed(rank)
 
     # generate data within our partition
-    data = {
+    data: dict[str, np.ndarray] = {
         x: np.random.uniform(0, 1, n) * partition.extent[i] + partition.origin[i]
         for i, x in enumerate(labels)
     }
@@ -141,7 +142,7 @@ def _overloading_struct(dimensions, n, ol):
         assert len(global_data[k]) == nranks * n
 
     # overload data
-    data = overload(partition, 1.0, data, ol, labels, structure_key="struct")
+    data = overload(partition, 1.0, data, ol, coord_keys, structure_key="struct")
 
     # did we give away any of our data?
     assert np.sum(data["s"] == rank) == n
@@ -149,12 +150,12 @@ def _overloading_struct(dimensions, n, ol):
     # check that if we have any obj of a "st", that we have every obj of that "st"
     present_structs = np.unique(data["struct"])
     needed_objs = global_data["id"][np.isin(global_data["struct"], present_structs)]
-    missing_objs = np.all(np.isin(needed_objs, data["id"]))
+    # missing_objs = np.all(np.isin(needed_objs, data["id"]))
     assert np.all(np.isin(needed_objs, data["id"]))
 
 
 @pytest.mark.mpi
-def test_1d_large_ol():
+def test_1d_large_ol() -> None:
     partition = Partition(1)
     if np.min(partition.decomposition) == 1:
         pytest.xfail("invalid number of MPI ranks for overload")
@@ -164,7 +165,7 @@ def test_1d_large_ol():
 
 
 @pytest.mark.mpi
-def test_1d():
+def test_1d() -> None:
     partition = Partition(1)
     if np.min(partition.decomposition) == 1:
         pytest.xfail("invalid number of MPI ranks for overload")
@@ -175,7 +176,7 @@ def test_1d():
 
 
 @pytest.mark.mpi
-def test_2d():
+def test_2d() -> None:
     partition = Partition(2)
     if np.min(partition.decomposition) == 1:
         pytest.xfail("invalid number of MPI ranks for overload")
@@ -186,7 +187,7 @@ def test_2d():
 
 
 @pytest.mark.mpi
-def test_3d():
+def test_3d() -> None:
     partition = Partition(3)
     if np.min(partition.decomposition) == 1:
         pytest.xfail("invalid number of MPI ranks for overload")
@@ -197,7 +198,7 @@ def test_3d():
 
 
 @pytest.mark.mpi
-def test_4d():
+def test_4d() -> None:
     partition = Partition(4)
     if np.min(partition.decomposition) == 1:
         pytest.xfail("invalid number of MPI ranks for overload")

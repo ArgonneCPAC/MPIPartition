@@ -2,7 +2,7 @@
 
 __author__ = """Michael Buehlmann"""
 __email__ = "buehlmann.michi@gmail.com"
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 
 
 from .distribute import distribute
